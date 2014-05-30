@@ -40,15 +40,17 @@ package org.metastatic.jessie;
 
 public enum SSLProtocolVersion
 {
-  SSLv3 (3, 0),
-  TLSv1 (3, 1);
+    SSLv3(3, 0),
+    TLSv1(3, 1),
+    TLSv1_1(3, 2),
+    TLSv1_2(3, 3);
 
-  public final int major;
-  public final int minor;
+    public final int major;
+    public final int minor;
 
-  private SSLProtocolVersion (int major, int minor)
-  {
-    this.major = major;
-    this.minor = minor;
-  }
+    private SSLProtocolVersion (int major, int minor)
+    {
+        this.major = major;
+        this.minor = minor;
+    }
 }

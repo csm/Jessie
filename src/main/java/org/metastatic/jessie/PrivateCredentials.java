@@ -38,17 +38,11 @@ exception statement from your version.  */
 
 package org.metastatic.jessie;
 
-import java.io.EOFException;
-import java.io.InputStream;
-import java.io.IOException;
+import java.io.*;
 
 import java.math.BigInteger;
 
-import java.security.InvalidKeyException;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.Security;
+import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -58,27 +52,23 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.security.spec.RSAPrivateCrtKeySpec;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
+import javax.crypto.Cipher;
+import javax.crypto.EncryptedPrivateKeyInfo;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 import javax.net.ssl.ManagerFactoryParameters;
+import javax.security.auth.DestroyFailedException;
+import javax.security.auth.Destroyable;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
-import gnu.javax.security.auth.callback.ConsoleCallbackHandler;
-import gnu.java.security.hash.HashFactory;
-import gnu.java.security.hash.IMessageDigest;
-import gnu.javax.crypto.mode.IMode;
-import gnu.javax.crypto.mode.ModeFactory;
-import gnu.javax.crypto.pad.WrongPaddingException;
-
-import gnu.java.security.der.DER;
-import gnu.java.security.der.DERReader;
-import gnu.java.util.Base64;
+import com.google.common.io.ByteStreams;
 
 /**
  * An instance of a manager factory parameters for holding a single
@@ -86,276 +76,140 @@ import gnu.java.util.Base64;
  */
 public class PrivateCredentials implements ManagerFactoryParameters
 {
+    // Fields.
+    // -------------------------------------------------------------------------
 
-  // Fields.
-  // -------------------------------------------------------------------------
+    public static final byte[] BEGIN_DSA = "-----BEGIN DSA PRIVATE KEY".getBytes();
+    public static final byte[] BEGIN_RSA = "-----BEGIN RSA PRIVATE KEY".getBytes();
 
-  public static final String BEGIN_DSA = "-----BEGIN DSA PRIVATE KEY";
-  public static final String END_DSA   = "-----END DSA PRIVATE KEY";
-  public static final String BEGIN_RSA = "-----BEGIN RSA PRIVATE KEY";
-  public static final String END_RSA   = "-----END RSA PRIVATE KEY";
+    private List<Entry> entries;
 
-  private List<PrivateKey> privateKeys;
-  private List<X509Certificate[]> certChains;
+    private class Entry implements Destroyable
+    {
+        PrivateKey privateKey;
+        final X509Certificate[] certChain;
 
-  // Constructor.
-  // -------------------------------------------------------------------------
+        private Entry(PrivateKey privateKey, X509Certificate[] certChain)
+        {
+            this.privateKey = privateKey;
+            this.certChain = certChain;
+        }
 
-  public PrivateCredentials()
-  {
-    privateKeys = new LinkedList<PrivateKey>();
-    certChains = new LinkedList<X509Certificate[]>();
-  }
+        @Override
+        public void destroy()
+        {
+            privateKey = null;
+        }
 
-  // Instance methods.
-  // -------------------------------------------------------------------------
+        @Override
+        public boolean isDestroyed()
+        {
+            return privateKey == null;
+        }
+    }
 
-  public void add(InputStream certChain, InputStream privateKey)
-    throws CertificateException, InvalidKeyException, InvalidKeySpecException,
-           IOException, NoSuchAlgorithmException, WrongPaddingException
-  {
-    CertificateFactory cf = CertificateFactory.getInstance("X.509");
-    Collection<? extends Certificate> certs = cf.generateCertificates(certChain);
-    X509Certificate[] chain = (X509Certificate[]) certs.toArray(new X509Certificate[0]);
+    // Constructor.
+    // -------------------------------------------------------------------------
 
-    String alg = null;
-    String line = readLine(privateKey);
-    String finalLine = null;
-    if (line.startsWith(BEGIN_DSA))
-      {
-        alg = "DSA";
-        finalLine = END_DSA;
-      }
-    else if (line.startsWith(BEGIN_RSA))
-      {
-        alg = "RSA";
-        finalLine = END_RSA;
-      }
-    else
-      throw new IOException("Unknown private key type.");
+    public PrivateCredentials()
+    {
+        entries = new LinkedList<>();
+    }
 
-    boolean encrypted = false;
-    String cipher = null;
-    String salt = null;
-    CPStringBuilder base64 = new CPStringBuilder();
-    while (true)
-      {
-        line = readLine(privateKey);
-        if (line == null)
-          throw new EOFException("premature end-of-file");
-        else if (line.startsWith("Proc-Type: 4,ENCRYPTED"))
-          encrypted = true;
-        else if (line.startsWith("DEK-Info: "))
-          {
-            int i = line.indexOf(',');
-            if (i < 0)
-              cipher = line.substring(10).trim();
-            else
-              {
-                cipher = line.substring(10, i).trim();
-                salt = line.substring(i + 1).trim();
-              }
-          }
-        else if (line.startsWith(finalLine))
-          break;
-        else if (line.length() > 0)
-          {
-            base64.append(line);
-            base64.append(System.getProperty("line.separator"));
-          }
-      }
+    // Instance methods.
+    // -------------------------------------------------------------------------
 
-    byte[] enckey = Base64.decode(base64.toString());
-    if (encrypted)
-      {
-        enckey = decryptKey(enckey, cipher, toByteArray(salt));
-      }
+    private CallbackHandler getCallbackHandler()
+    {
+        try
+        {
+            String className = System.getProperty("org.metastatic.jessie.passwordCallbackHandler");
+            Class clazz = Class.forName(className);
+            return (CallbackHandler) clazz.newInstance();
+        }
+        catch (ClassNotFoundException|InstantiationException|IllegalAccessException e)
+        {
+            return null;
+        }
+    }
 
-    DERReader der = new DERReader(enckey);
-    if (der.read().getTag() != DER.SEQUENCE)
-      throw new IOException("malformed DER sequence");
-    der.read(); // version
+    public void add(InputStream certChain, InputStream privateKey)
+            throws CertificateException, InvalidKeyException, InvalidKeySpecException,
+            IOException, NoSuchAlgorithmException, NoSuchPaddingException, UnsupportedCallbackException, InvalidAlgorithmParameterException
+    {
+        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+        Collection<? extends Certificate> certs = cf.generateCertificates(certChain);
+        X509Certificate[] chain = certs.toArray(new X509Certificate[certs.size()]);
 
-    KeyFactory kf = KeyFactory.getInstance(alg);
-    KeySpec spec = null;
-    if (alg.equals("DSA"))
-      {
-        BigInteger p = (BigInteger) der.read().getValue();
-        BigInteger q = (BigInteger) der.read().getValue();
-        BigInteger g = (BigInteger) der.read().getValue();
-        der.read(); // y
-        BigInteger x = (BigInteger) der.read().getValue();
-        spec = new DSAPrivateKeySpec(x, p, q, g);
-      }
-    else
-      {
-        spec = new RSAPrivateCrtKeySpec(
-          (BigInteger) der.read().getValue(),  // modulus
-          (BigInteger) der.read().getValue(),  // pub exponent
-          (BigInteger) der.read().getValue(),  // priv expenent
-          (BigInteger) der.read().getValue(),  // prime p
-          (BigInteger) der.read().getValue(),  // prime q
-          (BigInteger) der.read().getValue(),  // d mod (p-1)
-          (BigInteger) der.read().getValue(),  // d mod (q-1)
-          (BigInteger) der.read().getValue()); // coefficient
-      }
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        ByteStreams.copy(privateKey, bout);
+        byte[] pkData = bout.toByteArray();
 
-    privateKeys.add(kf.generatePrivate(spec));
-    certChains.add(chain);
-  }
+        String alg = null;
+        outer:for (int i = 0; i < pkData.length - BEGIN_DSA.length; i++)
+        {
+            boolean isRsa = true;
+            boolean isDsa = true;
+            for (int j = 0; j < BEGIN_DSA.length; j++)
+            {
+                byte b = pkData[j + i];
+                if (b != BEGIN_DSA[j])
+                    isDsa = false;
+                if (b != BEGIN_RSA[j])
+                    isRsa = false;
+                if (!isDsa && !isRsa)
+                    continue outer;
+            }
+            if (isDsa)
+            {
+                alg = "DSA";
+                break;
+            }
+            if (isRsa)
+            {
+                alg = "RSA";
+                break;
+            }
+        }
+        if (alg == null)
+            throw new InvalidKeyException("unknown algorithm in PEM file");
 
-  public List<PrivateKey> getPrivateKeys()
-  {
-    if (isDestroyed())
-      {
-        throw new IllegalStateException("this object is destroyed");
-      }
-    return privateKeys;
-  }
+        EncryptedPrivateKeyInfo epki = new EncryptedPrivateKeyInfo(pkData);
+        Cipher cipher = Cipher.getInstance(epki.getAlgName());
+        CallbackHandler callbackHandler = getCallbackHandler();
+        if (callbackHandler == null)
+            throw new InvalidKeyException("no callback handler configured, can't get password for private key");
+        PasswordCallback callback = new PasswordCallback("Password for private key", false);
+        callbackHandler.handle(new Callback[] { callback });
+        PBEKeySpec keySpec = new PBEKeySpec(callback.getPassword());
+        SecretKeyFactory skFactory = SecretKeyFactory.getInstance(epki.getAlgName());
+        Key key = skFactory.generateSecret(keySpec);
+        AlgorithmParameters params = epki.getAlgParameters();
+        cipher.init(Cipher.DECRYPT_MODE, key, params);
+        KeySpec spec = epki.getKeySpec(cipher);
+        KeyFactory factory = KeyFactory.getInstance(alg);
+        PrivateKey pk = factory.generatePrivate(spec);
 
-  public List<X509Certificate[]> getCertChains()
-  {
-    return certChains;
-  }
+        entries.add(new Entry(pk, chain));
+    }
 
-  public void destroy()
-  {
-    privateKeys.clear();
-    privateKeys = null;
-  }
+    public List<PrivateKey> getPrivateKeys()
+    {
+        return entries.stream().map(e -> e.privateKey).collect(Collectors.toList());
+    }
 
-  public boolean isDestroyed()
-  {
-    return (privateKeys == null);
-  }
+    public List<X509Certificate[]> getCertChains()
+    {
+        return entries.stream().map(e -> e.certChain).collect(Collectors.toList());
+    }
 
-  // Own methods.
-  // -------------------------------------------------------------------------
+    public void destroy()
+    {
+        entries.stream().forEach(Entry::destroy);
+    }
 
-  private String readLine(InputStream in) throws IOException
-  {
-    boolean eol_is_cr = System.getProperty("line.separator").equals("\r");
-    CPStringBuilder str = new CPStringBuilder();
-    while (true)
-      {
-        int i = in.read();
-        if (i == -1)
-          {
-            if (str.length() > 0)
-              break;
-            else
-              return null;
-          }
-        else if (i == '\r')
-          {
-            if (eol_is_cr)
-              break;
-          }
-        else if (i == '\n')
-          break;
-        else
-          str.append((char) i);
-      }
-    return str.toString();
-  }
-
-  private byte[] decryptKey(byte[] ct, String cipher, byte[] salt)
-    throws IOException, InvalidKeyException, WrongPaddingException
-  {
-    byte[] pt = new byte[ct.length];
-    IMode mode = null;
-    if (cipher.equals("DES-EDE3-CBC"))
-      {
-        mode = ModeFactory.getInstance("CBC", "TripleDES", 8);
-        HashMap attr = new HashMap();
-        attr.put(IMode.KEY_MATERIAL, deriveKey(salt, 24));
-        attr.put(IMode.IV, salt);
-        attr.put(IMode.STATE, new Integer(IMode.DECRYPTION));
-        mode.init(attr);
-      }
-    else if (cipher.equals("DES-CBC"))
-      {
-        mode = ModeFactory.getInstance("CBC", "DES", 8);
-        HashMap attr = new HashMap();
-        attr.put(IMode.KEY_MATERIAL, deriveKey(salt, 8));
-        attr.put(IMode.IV, salt);
-        attr.put(IMode.STATE, new Integer(IMode.DECRYPTION));
-        mode.init(attr);
-      }
-    else
-      throw new IllegalArgumentException("unknown cipher: " + cipher);
-
-    for (int i = 0; i < ct.length; i += 8)
-      mode.update(ct, i, pt, i);
-
-    int pad = pt[pt.length-1];
-    if (pad < 1 || pad > 8)
-      throw new WrongPaddingException();
-    for (int i = pt.length - pad; i < pt.length; i++)
-      {
-        if (pt[i] != pad)
-          throw new WrongPaddingException();
-      }
-
-    byte[] result = new byte[pt.length - pad];
-    System.arraycopy(pt, 0, result, 0, result.length);
-    return result;
-  }
-
-  private byte[] deriveKey(byte[] salt, int keylen)
-    throws IOException
-  {
-    CallbackHandler passwordHandler = new ConsoleCallbackHandler();
-    try
-      {
-        Class c = Class.forName(Security.getProperty("jessie.password.handler"));
-        passwordHandler = (CallbackHandler) c.newInstance();
-      }
-    catch (Exception x) { }
-
-    PasswordCallback passwdCallback =
-      new PasswordCallback("Enter PEM passphrase: ", false);
-    try
-      {
-        passwordHandler.handle(new Callback[] { passwdCallback });
-      }
-    catch (UnsupportedCallbackException uce)
-      {
-        throw new IOException("specified handler cannot handle passwords");
-      }
-    char[] passwd = passwdCallback.getPassword();
-
-    IMessageDigest md5 = HashFactory.getInstance("MD5");
-    byte[] key = new byte[keylen];
-    int count = 0;
-    while (count < keylen)
-      {
-        for (int i = 0; i < passwd.length; i++)
-          md5.update((byte) passwd[i]);
-        md5.update(salt, 0, salt.length);
-        byte[] digest = md5.digest();
-        int len = Math.min(digest.length, keylen - count);
-        System.arraycopy(digest, 0, key, count, len);
-        count += len;
-        if (count >= keylen)
-          break;
-        md5.reset();
-        md5.update(digest, 0, digest.length);
-      }
-    passwdCallback.clearPassword();
-    return key;
-  }
-
-  private byte[] toByteArray(String hex)
-  {
-    hex = hex.toLowerCase();
-    byte[] buf = new byte[hex.length() / 2];
-    int j = 0;
-    for (int i = 0; i < buf.length; i++)
-      {
-        buf[i] = (byte) ((Character.digit(hex.charAt(j++), 16) << 4) |
-                          Character.digit(hex.charAt(j++), 16));
-      }
-    return buf;
-  }
+    public boolean isDestroyed()
+    {
+        return entries.stream().allMatch(Entry::isDestroyed);
+    }
 }

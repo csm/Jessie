@@ -38,11 +38,10 @@ exception statement from your version.  */
 
 package org.metastatic.jessie;
 
-import gnu.java.security.Requires;
-
 import org.metastatic.jessie.provider.SimpleSessionContext;
 
 import java.util.Enumeration;
+import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLPermission;
@@ -96,190 +95,184 @@ import javax.net.ssl.SSLSessionContext;
  */
 public abstract class AbstractSessionContext implements SSLSessionContext
 {
-  protected long timeout;
-  private static Class<? extends AbstractSessionContext>
-    implClass = SimpleSessionContext.class;
+    protected long timeout;
+    private static Class<? extends AbstractSessionContext> implClass = SimpleSessionContext.class;
 
-  /**
-   * Create a new instance of a session context, according to the configured
-   * implementation class.
-   *
-   * @return The new session context.
-   * @throws SSLException If an error occurs in creating the instance.
-   */
-  public static AbstractSessionContext newInstance () throws SSLException
-  {
-    try
-      {
-        return implClass.newInstance();
-      }
-    catch (IllegalAccessException iae)
-      {
-        throw new SSLException(iae);
-      }
-    catch (InstantiationException ie)
-      {
-        throw new SSLException(ie);
-      }
-  }
+    /**
+     * Create a new instance of a session context, according to the configured
+     * implementation class.
+     *
+     * @return The new session context.
+     * @throws SSLException If an error occurs in creating the instance.
+     */
+    public static AbstractSessionContext newInstance() throws SSLException
+    {
+        try
+        {
+            return implClass.newInstance();
+        }
+        catch (IllegalAccessException|InstantiationException e)
+        {
+            throw new SSLException(e);
+        }
+    }
 
-  /**
-   * Reconfigure this instance to use a different session context
-   * implementation.
-   *
-   * <p><strong>Note:</strong> this method requires that the caller have
-   * {@link SSLPermission} with target
-   * <code>gnu.javax.net.ssl.AbstractSessionContext</code> and action
-   * <code>setImplClass</code>.
-   *
-   * @param clazz The new implementation class.
-   * @throws SecurityException If the caller does not have permission to
-   *  change the session context.
-   */
-  public static synchronized void setImplClass
-    (Class<? extends AbstractSessionContext> clazz)
-    throws SecurityException
-  {
-    SecurityManager sm = System.getSecurityManager ();
-    if (sm != null)
-      sm.checkPermission(new SSLPermission("gnu.javax.net.ssl.AbstractSessionContext",
-                                           "setImplClass"));
-    implClass = clazz;
-  }
+    /**
+     * Reconfigure this instance to use a different session context
+     * implementation.
+     *
+     * <p><strong>Note:</strong> this method requires that the caller have
+     * {@link SSLPermission} with target
+     * <code>gnu.javax.net.ssl.AbstractSessionContext</code> and action
+     * <code>setImplClass</code>.
+     *
+     * @param clazz The new implementation class.
+     * @throws SecurityException If the caller does not have permission to
+     *  change the session context.
+     */
+    public static synchronized void setImplClass(Class<? extends AbstractSessionContext> clazz)
+        throws SecurityException
+    {
+        SecurityManager sm = System.getSecurityManager ();
+        if (sm != null)
+            sm.checkPermission(new SSLPermission("org.metastatic.jessie.AbstractSessionContext",
+                                                 "setImplClass"));
+        implClass = clazz;
+    }
 
-  /**
-   * @param timeout The initial session timeout.
-   */
-  protected AbstractSessionContext (final int timeout)
+    /**
+     * @param timeout The initial session timeout.
+     */
+    protected AbstractSessionContext (final int timeout)
   {
     setSessionTimeout(timeout);
   }
 
-  /**
-   * Fetch a saved session by its ID. This method will (possibly)
-   * deserialize and return the SSL session with that ID, or null if
-   * the requested session does not exist, or has expired.
-   *
-   * <p>Subclasses implementing this class <strong>must not</strong>
-   * perform any blocking operations in this method. If any blocking
-   * behavior is required, it must be done in the {@link load(char[])}
-   * method.
-   *
-   * @param sessionId The ID of the session to get.
-   * @return The found session, or null if no such session was found,
-   * or if that session has expired.
-   */
-  public final SSLSession getSession (byte[] sessionId)
-  {
-    Session s = implGet (sessionId);
-    if (s != null
-        && System.currentTimeMillis () - s.getLastAccessedTime () > timeout)
-      {
-        remove (sessionId);
-        return null;
-      }
-    return s;
-  }
-
-  public final SSLSession getSession(String host, int port)
-  {
-    for (Enumeration e = getIds(); e.hasMoreElements(); )
-      {
-        byte[] id = (byte[]) e.nextElement();
-        SSLSession s = getSession(id);
-        if (s == null) // session expired.
-          continue;
-        String host2 = s.getPeerHost();
-        if (host == null)
-          {
-            if (host2 != null)
-              continue;
-          }
-        else if (!host.equals(host2))
-          continue;
-        int port2 = s.getPeerPort();
-        if (port != port2)
-          continue;
-
-        // Else, a match.
+    /**
+     * Fetch a saved session by its ID. This method will (possibly)
+     * deserialize and return the SSL session with that ID, or null if
+     * the requested session does not exist, or has expired.
+     *
+     * <p>Subclasses implementing this class <strong>must not</strong>
+     * perform any blocking operations in this method. If any blocking
+     * behavior is required, it must be done in the {@link #load(char[])}
+     * method.
+     *
+     * @param sessionId The ID of the session to get.
+     * @return The found session, or null if no such session was found,
+     * or if that session has expired.
+     */
+    @Override
+    public final SSLSession getSession(byte[] sessionId)
+    {
+        Session s = implGet(sessionId);
+        if (s != null && System.currentTimeMillis() - s.getLastAccessedTime() > timeout)
+        {
+            remove(sessionId);
+            return null;
+        }
         return s;
-      }
+    }
 
-    return null;
-  }
+    public final SSLSession getSession(String host, int port)
+    {
+        for (Enumeration e = getIds(); e.hasMoreElements(); )
+        {
+            byte[] id = (byte[]) e.nextElement();
+            SSLSession s = getSession(id);
+            if (s == null) // session expired.
+                continue;
+            String host2 = s.getPeerHost();
+            if (host == null)
+            {
+                if (host2 != null)
+                    continue;
+            }
+            else if (!host.equals(host2))
+                continue;
+            int port2 = s.getPeerPort();
+            if (port != port2)
+                continue;
 
-  /**
-   * To be implemented by subclasses. Subclasses do not need to check
-   * timeouts in this method.
-   *
-   * @param sessionId The session ID.
-   * @return The session, or <code>null</code> if the requested session
-   *  was not found.
-   */
-  protected abstract Session implGet (byte[] sessionId);
+            // Else, a match.
+            return s;
+        }
 
-  public int getSessionTimeout()
-  {
-    return (int) (timeout / 1000);
-  }
+        return null;
+    }
 
-  /**
-   * Load this session store from the underlying media, if supported
-   * by the implementation.
-   *
-   * @param password The password that protects the sensitive data in
-   * this store.
-   * @throws SessionStoreException If reading this store fails, such
-   * as when an I/O exception occurs, or if the password is incorrect.
-   */
-  public abstract void load (char[] password) throws SessionStoreException;
+    /**
+     * To be implemented by subclasses. Subclasses do not need to check
+     * timeouts in this method.
+     *
+     * @param sessionId The session ID.
+     * @return The session, or <code>null</code> if the requested session
+     *  was not found.
+     */
+    protected abstract Session implGet (byte[] sessionId);
 
-  /**
-   * Add a new session to the store. The underlying implementation
-   * will add the session to its store, possibly overwriting any
-   * existing session with the same ID.
-   *
-   * <p>Subclasses implementing this class <strong>must not</strong>
-   * perform any blocking operations in this method. If any blocking
-   * behavior is required, it must be done in the {@link
-   * #store(char[])} method.
-   *
-   * @param session The session to add.
-   * @throws NullPointerException If the argument is null.
-   */
-  public abstract void put (Session session);
+    public int getSessionTimeout()
+    {
+        return (int) TimeUnit.SECONDS.convert(timeout, TimeUnit.MILLISECONDS);
+    }
 
-  /**
-   * Remove a session from this store.
-   *
-   * <p>Subclasses implementing this class <strong>must not</strong>
-   * perform any blocking operations in this method. If any blocking
-   * behavior is required, it must be done in the {@link
-   * #store(char[])} method.
-   *
-   * @param sessionId The ID of the session to remove.
-   */
-  public abstract void remove (byte[] sessionId);
+    /**
+     * Load this session store from the underlying media, if supported
+     * by the implementation.
+     *
+     * @param password The password that protects the sensitive data in
+     * this store.
+     * @throws SessionStoreException If reading this store fails, such
+     * as when an I/O exception occurs, or if the password is incorrect.
+     */
+    public abstract void load (char[] password) throws SessionStoreException;
 
-  /**
-   *
-   */
-  public final void setSessionTimeout(int seconds)
-  {
-    if (timeout < 0)
-      throw new IllegalArgumentException("timeout may not be negative");
-    this.timeout = (long) seconds * 1000;
-  }
+    /**
+     * Add a new session to the store. The underlying implementation
+     * will add the session to its store, possibly overwriting any
+     * existing session with the same ID.
+     *
+     * <p>Subclasses implementing this class <strong>must not</strong>
+     * perform any blocking operations in this method. If any blocking
+     * behavior is required, it must be done in the {@link
+     * #store(char[])} method.
+     *
+     * @param session The session to add.
+     * @throws NullPointerException If the argument is null.
+     */
+    public abstract void put (Session session);
 
-  /**
-   * Commit this session store to the underlying media. For session
-   * store implementations that support saving sessions across
-   * invocations of the JVM, this method will save any sessions that
-   * have not expired to some persistent media, so they may be loaded
-   * and used again later.
-   *
-   * @param password The password that will protect the sensitive data
-   * in this store.
-   */
-  public abstract void store (char[] password) throws SessionStoreException;
+    /**
+     * Remove a session from this store.
+     *
+     * <p>Subclasses implementing this class <strong>must not</strong>
+     * perform any blocking operations in this method. If any blocking
+     * behavior is required, it must be done in the {@link
+     * #store(char[])} method.
+     *
+     * @param sessionId The ID of the session to remove.
+     */
+    public abstract void remove (byte[] sessionId);
+
+    /**
+     *
+     */
+    public final void setSessionTimeout(int seconds)
+    {
+        if (timeout < 0)
+            throw new IllegalArgumentException("timeout may not be negative");
+        this.timeout = TimeUnit.MILLISECONDS.convert(seconds, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Commit this session store to the underlying media. For session
+     * store implementations that support saving sessions across
+     * invocations of the JVM, this method will save any sessions that
+     * have not expired to some persistent media, so they may be loaded
+     * and used again later.
+     *
+     * @param password The password that will protect the sensitive data
+     * in this store.
+     */
+    public abstract void store (char[] password) throws SessionStoreException;
 }

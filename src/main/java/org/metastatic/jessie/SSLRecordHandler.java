@@ -43,58 +43,58 @@ import javax.net.ssl.SSLException;
 
 public abstract class SSLRecordHandler
 {
-  private final byte contentType;
+    private final byte contentType;
 
-  /**
-   * Create a new record handler for the given content type.
-   */
-  protected SSLRecordHandler (final byte contentType)
-  {
-    this.contentType = contentType;
-  }
+    /**
+     * Create a new record handler for the given content type.
+     */
+    protected SSLRecordHandler(final byte contentType)
+    {
+        this.contentType = contentType;
+    }
 
-  /**
-   * Handle an SSL record layer message, encapsulated in the supplied
-   * input buffer, and writing any output bytes to the output
-   * buffer. The input buffer is always only limited to the bytes that
-   * encapsulate the <em>fragment</em> of the record layer message
-   * &mdash; that is, the content-type, version, and length fields are
-   * not present in the input buffer, and the limit of the input
-   * buffer is always only as large as the fragment. If the message
-   * being read is not contained entirely within the given buffer,
-   * then the implementation should cache the bytes read as input, and
-   * wait until subsequent calls finish the object being read.
-   *
-   * <p>Technically, we expect only APPLICATION messages to ever
-   * produce output, but do suppose that extensions to the SSL
-   * protocol could allow other channels that produce output.
-   *
-   * @param input The input buffer.
-   * @param output The output buffer.
-   */
-  public abstract void handle (final ByteBuffer input,
-                               final ByteBuffer output)
-    throws SSLException;
+    /**
+     * Handle an SSL record layer message, encapsulated in the supplied
+     * input buffer, and writing any output bytes to the output
+     * buffer. The input buffer is always only limited to the bytes that
+     * encapsulate the <em>fragment</em> of the record layer message
+     * &mdash; that is, the content-type, version, and length fields are
+     * not present in the input buffer, and the limit of the input
+     * buffer is always only as large as the fragment. If the message
+     * being read is not contained entirely within the given buffer,
+     * then the implementation should cache the bytes read as input, and
+     * wait until subsequent calls finish the object being read.
+     * <p/>
+     * <p>Technically, we expect only APPLICATION messages to ever
+     * produce output, but do suppose that extensions to the SSL
+     * protocol could allow other channels that produce output.
+     *
+     * @param input  The input buffer.
+     * @param output The output buffer.
+     */
+    public abstract void handle(final ByteBuffer input,
+                                final ByteBuffer output)
+            throws SSLException;
 
-  /**
-   * Returns the record layer content type that this handler is for.
-   *
-   * @return The content type value.
-   */
-  public final byte contentType ()
-  {
-    return contentType;
-  }
+    /**
+     * Returns the record layer content type that this handler is for.
+     *
+     * @return The content type value.
+     */
+    public final byte contentType()
+    {
+        return contentType;
+    }
 
-  public boolean equals (final Object o)
-  {
-    if (!(o instanceof SSLRecordHandler))
-      return false;
-    return ((SSLRecordHandler) o).contentType == contentType;
-  }
+    public boolean equals(final Object o)
+    {
+        if (!(o instanceof SSLRecordHandler))
+            return false;
+        return ((SSLRecordHandler) o).contentType == contentType;
+    }
 
-  public int hashCode ()
-  {
-    return contentType & 0xFF;
-  }
+    public int hashCode()
+    {
+        return contentType & 0xFF;
+    }
 }

@@ -38,8 +38,6 @@ exception statement from your version.  */
 
 package org.metastatic.jessie;
 
-import gnu.java.security.Engine;
-
 import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
 import java.security.NoSuchAlgorithmException;
@@ -51,92 +49,108 @@ import java.security.Security;
  */
 public abstract class SSLCipherSuite
 {
-  private static final String SERVICE = "SSLCipherSuite";
-  private final String algorithm;
-  private final byte[] id;
-  private final SSLProtocolVersion version;
-  private Provider provider;
+    private static final String SERVICE = "SSLCipherSuite";
+    private final String algorithm;
+    private final byte[] id;
+    private final SSLProtocolVersion version;
+    private Provider provider;
 
-  protected SSLCipherSuite (final String algorithm, final byte[] id,
-                            final SSLProtocolVersion version)
-  {
-    this.algorithm = algorithm;
-    if (id.length != 2)
-      throw new IllegalArgumentException ("cipher suite ID must be two bytes");
-    this.id = (byte[]) id.clone ();
-    this.version = version;
-  }
+    protected SSLCipherSuite(final String algorithm, final byte[] id,
+                             final SSLProtocolVersion version)
+    {
+        this.algorithm = algorithm;
+        if (id.length != 2)
+            throw new IllegalArgumentException("cipher suite ID must be two bytes");
+        this.id = (byte[]) id.clone();
+        this.version = version;
+    }
 
-  public static final SSLCipherSuite getInstance (SSLProtocolVersion version, byte[] id)
-    throws NoSuchAlgorithmException
-  {
-    return getInstance (version + "-" + ((id[0] & 0xFF) + "/" + (id[1] & 0xFF)));
-  }
+    public static final SSLCipherSuite getInstance(SSLProtocolVersion version, byte[] id)
+            throws NoSuchAlgorithmException
+    {
+        return getInstance(version + "-" + ((id[0] & 0xFF) + "/" + (id[1] & 0xFF)));
+    }
 
-  public static final SSLCipherSuite getInstance (SSLProtocolVersion version,
-                                                  byte[] id, Provider provider)
-    throws NoSuchAlgorithmException
-  {
-    return getInstance (version + "-" + (id[0] & 0xFF) + "/" + (id[1] & 0xFF), provider);
-  }
+    public static final SSLCipherSuite getInstance(SSLProtocolVersion version,
+                                                   byte[] id, Provider provider)
+            throws NoSuchAlgorithmException
+    {
+        return getInstance(version + "-" + (id[0] & 0xFF) + "/" + (id[1] & 0xFF), provider);
+    }
 
-  public static final SSLCipherSuite getInstance (String name)
-    throws NoSuchAlgorithmException
-  {
-    Provider[] providers = Security.getProviders ();
-    for (int i = 0; i < providers.length; i++)
-      {
+    public static final SSLCipherSuite getInstance(String name)
+            throws NoSuchAlgorithmException
+    {
+        Provider[] providers = Security.getProviders();
+        for (int i = 0; i < providers.length; i++)
+        {
+            try
+            {
+                return getInstance(name, providers[i]);
+            } catch (NoSuchAlgorithmException nsae)
+            {
+                // Ignore.
+            }
+        }
+
+        throw new NoSuchAlgorithmException(SERVICE + ": " + name);
+    }
+
+    public static final SSLCipherSuite getInstance(String name, Provider provider)
+            throws NoSuchAlgorithmException
+    {
+        SSLCipherSuite suite = null;
         try
-          {
-            return getInstance (name, providers[i]);
-          }
-        catch (NoSuchAlgorithmException nsae)
-          {
-            // Ignore.
-          }
-      }
+        {
+            suite = doGetInstance(name, provider);
+            suite.provider = provider;
+        }
+        catch (ClassNotFoundException|IllegalAccessException|InstantiationException e)
+        {
+            // XXX
+            NoSuchAlgorithmException nsae = new NoSuchAlgorithmException(name);
+            nsae.initCause(e);
+            throw nsae;
+        }
+        return suite;
+    }
 
-    throw new NoSuchAlgorithmException (SERVICE + ": " + name);
-  }
+    public final String getAlgorithm()
+    {
+        return algorithm;
+    }
 
-  public static final SSLCipherSuite getInstance (String name, Provider provider)
-    throws NoSuchAlgorithmException
-  {
-    SSLCipherSuite suite = null;
-    try
-      {
-        suite = (SSLCipherSuite) Engine.getInstance (SERVICE, name, provider);
-        suite.provider = provider;
-      }
-    catch (InvocationTargetException ite)
-      {
-        // XXX
-        NoSuchAlgorithmException nsae = new NoSuchAlgorithmException (name);
-        nsae.initCause (ite);
-        throw nsae;
-      }
-    return suite;
-  }
+    public final byte[] getId()
+    {
+        return id.clone();
+    }
 
-  public final String getAlgorithm ()
-  {
-    return algorithm;
-  }
+    public final Provider getProvider()
+    {
+        return provider;
+    }
 
-  public final byte[] getId ()
-  {
-    return (byte[]) id.clone ();
-  }
+    public final SSLProtocolVersion getProtocolVersion()
+    {
+        return version;
+    }
 
-  public final Provider getProvider ()
-  {
-    return provider;
-  }
+    public abstract void encipher(ByteBuffer in, ByteBuffer out);
 
-  public final SSLProtocolVersion getProtocolVersion ()
-  {
-    return version;
-  }
-
-  public abstract void encipher (ByteBuffer in, ByteBuffer out);
+    private static SSLCipherSuite doGetInstance(String name, Provider provider)
+            throws ClassNotFoundException, IllegalAccessException, InstantiationException, NoSuchAlgorithmException
+    {
+        Object value = provider.get(String.format("%s.%s", SERVICE, name));
+        if (value instanceof String)
+        {
+            Class clazz = Class.forName((String) value);
+            return (SSLCipherSuite) clazz.newInstance();
+        }
+        value = provider.get(String.format("Alg.Alias.%s.%s", SERVICE, name));
+        if (value instanceof String)
+        {
+            return doGetInstance((String) value, provider);
+        }
+        throw new NoSuchAlgorithmException(name);
+    }
 }

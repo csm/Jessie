@@ -38,9 +38,9 @@ exception statement from your version.  */
 
 package org.metastatic.jessie.provider;
 
-import gnu.javax.net.ssl.AbstractSessionContext;
-import gnu.javax.net.ssl.Session;
-import gnu.javax.net.ssl.SessionStoreException;
+import org.metastatic.jessie.AbstractSessionContext;
+import org.metastatic.jessie.Session;
+import org.metastatic.jessie.SessionStoreException;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;

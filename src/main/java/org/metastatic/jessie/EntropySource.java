@@ -43,20 +43,19 @@ package org.metastatic.jessie;
  */
 public interface EntropySource
 {
+    /**
+     * Returns the estimated quality of this source. This value should be
+     * between 0 and 100 (the running quality is computed as a percentage,
+     * 100 percent being perfect-quality).
+     *
+     * @return The quality.
+     */
+    double quality();
 
-  /**
-   * Returns the estimated quality of this source. This value should be
-   * between 0 and 100 (the running quality is computed as a percentage,
-   * 100 percent being perfect-quality).
-   *
-   * @return The quality.
-   */
-  double quality();
-
-  /**
-   * Returns a new buffer with the next random bytes to add.
-   *
-   * @return The next random bytes.
-   */
-  byte[] nextBytes();
+    /**
+     * Returns a new buffer with the next random bytes to add.
+     *
+     * @return The next random bytes.
+     */
+    byte[] nextBytes();
 }

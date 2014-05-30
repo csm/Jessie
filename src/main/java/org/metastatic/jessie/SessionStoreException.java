@@ -42,18 +42,18 @@ import javax.net.ssl.SSLException;
 
 public class SessionStoreException extends SSLException
 {
-  public SessionStoreException (final String message)
-  {
-    super (message);
-  }
+    public SessionStoreException(final String message)
+    {
+        super(message);
+    }
 
-  public SessionStoreException (final String message, final Throwable cause)
-  {
-    super (message, cause);
-  }
+    public SessionStoreException(final String message, final Throwable cause)
+    {
+        super(message, cause);
+    }
 
-  public SessionStoreException (final Throwable cause)
-  {
-    super (cause);
-  }
+    public SessionStoreException(final Throwable cause)
+    {
+        super(cause);
+    }
 }

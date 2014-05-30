@@ -48,7 +48,7 @@ import javax.net.ssl.KeyManager;
  */
 public interface PreSharedKeyManager extends KeyManager
 {
-  SecretKey getKey(String name) throws KeyManagementException;
+    SecretKey getKey(String name) throws KeyManagementException;
 
-  String chooseIdentityHint();
+    String chooseIdentityHint();
 }

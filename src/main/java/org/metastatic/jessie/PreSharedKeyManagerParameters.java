@@ -38,6 +38,8 @@ exception statement from your version. */
 
 package org.metastatic.jessie;
 
+import com.google.common.base.Preconditions;
+
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 
@@ -47,37 +49,36 @@ import javax.net.ssl.ManagerFactoryParameters;
 /**
  * @author Casey Marshall (csm@gnu.org)
  */
-public class PreSharedKeyManagerParameters
-  implements ManagerFactoryParameters
+public class PreSharedKeyManagerParameters implements ManagerFactoryParameters
 {
-  private final LinkedHashMap<String, SecretKey> keys;
+    private final LinkedHashMap<String, SecretKey> keys;
 
-  public PreSharedKeyManagerParameters()
+    public PreSharedKeyManagerParameters()
   {
     keys = new LinkedHashMap<String, SecretKey>();
   }
 
-  public SecretKey getKey(String name)
-  {
-    name.getClass();
-    return keys.get(name);
-  }
+    public SecretKey getKey(String name)
+    {
+        Preconditions.checkNotNull(name);
+        return keys.get(name);
+    }
 
-  public void putKey(String name, SecretKey key)
-  {
-    name.getClass();
-    key.getClass();
-    keys.put(name, key);
-  }
+    public void putKey(String name, SecretKey key)
+    {
+        Preconditions.checkNotNull(name);
+        Preconditions.checkNotNull(key);
+        keys.put(name, key);
+    }
 
-  public boolean removeKey(String name)
-  {
-    name.getClass();
-    return keys.remove(name) != null;
-  }
+    public boolean removeKey(String name)
+    {
+        Preconditions.checkNotNull(name);
+        return keys.remove(name) != null;
+    }
 
-  public Iterator<String> identities()
-  {
-    return keys.keySet().iterator();
-  }
+    public Iterator<String> identities()
+    {
+        return keys.keySet().iterator();
+    }
 }
