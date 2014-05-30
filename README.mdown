@@ -1,0 +1,12 @@
+# Jessie, a JSSE provider.
+
+This is (planned to be) a new version of Jessie, a TLS provider for Java's JSSE API.
+
+Jessie began way back as an independent implementation of the JSSE API and a provider that implemented SSLv3 and TLSv1. It eventually made its way into [GNU Classpath](http://www.gnu.org/s/classpath).
+
+The current plan, in no particular order:
+
+* Fork the provider code from GNU Classpath, and strip out any references to classes private to GNU Classpath (e.g., replace private crypto API usage with JCE).
+* Kick out SSLv3 support, make TLSv1, TLSv1.1, and TLSv1.2 support the focus.
+* Create a test suite for the underlying components.
+* Bring in/improve other useful cipher suites not present in the Oracle JSSE.
