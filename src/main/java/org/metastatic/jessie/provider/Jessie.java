@@ -45,7 +45,7 @@ import java.security.Provider;
 /**
  * This is the security provider for Jessie. It implements the following
  * algorithms:
- *
+ * <p/>
  * <pre>
  * {@link javax.net.ssl.SSLContext}.SSLv3
  * {@link javax.net.ssl.SSLContext}.SSL
@@ -55,48 +55,48 @@ import java.security.Provider;
  * {@link javax.net.ssl.TrustManagerFactory}.JessieX509
  * {@link javax.net.ssl.TrustManagerFactory}.SRP
  * </pre>
- *
  */
 public class Jessie extends Provider
 {
-  private static final long serialVersionUID = -1;
+    private static final long serialVersionUID = -1;
 
-  public static final String VERSION = "2.0.0";
-  public static final double VERSION_DOUBLE = 2.0;
+    public static final String VERSION = "2.0.0";
+    public static final double VERSION_DOUBLE = 2.0;
 
-  public Jessie()
-  {
-    super("Jessie", VERSION_DOUBLE,
-          "Implementing TLSv1.1, with SSLv3, TLSv1.0 compatibility modes; "
-          + "X.509 Key Manager Factory; "
-          + "X.509 Trust Manager Factory; "
-          + "SSLv3 MD5 and SHA Mac.");
+    public Jessie()
+    {
+        super("Jessie", VERSION_DOUBLE,
+                "Implementing TLSv1.1, with SSLv3, TLSv1.0 compatibility modes; "
+                        + "X.509 Key Manager Factory; "
+                        + "X.509 Trust Manager Factory; "
+                        + "SSLv3 MD5 and SHA Mac."
+        );
 
-    AccessController.doPrivileged(new PrivilegedAction<Object>()
-      {
-        public Object run()
-        {
-          put("SSLContext.TLSv1.1", SSLContextImpl.class.getName());
-          put("Alg.Alias.SSLContext.SSLv3",   "TLSv1.1");
-          put("Alg.Alias.SSLContext.TLSv1",   "TLSv1.1");
-          put("Alg.Alias.SSLContext.TLSv1.0", "TLSv1.1");
-          put("Alg.Alias.SSLContext.TLS",     "TLSv1.1");
-          put("Alg.Alias.SSLContext.SSL",     "TLSv1.1");
+        AccessController.doPrivileged((PrivilegedAction<Object>) () -> {
+            put("SSLContext.TLSv1.1", SSLContextImpl.class.getName());
+            put("Alg.Alias.SSLContext.SSLv3", "TLSv1.1");
+            put("Alg.Alias.SSLContext.TLSv1", "TLSv1.1");
+            put("Alg.Alias.SSLContext.TLSv1.0", "TLSv1.1");
+            put("Alg.Alias.SSLContext.TLS", "TLSv1.1");
+            put("Alg.Alias.SSLContext.SSL", "TLSv1.1");
 
-          put("KeyManagerFactory.JessieX509",   X509KeyManagerFactory.class.getName());
-          put("TrustManagerFactory.JessieX509", X509TrustManagerFactory.class.getName());
-          put("KeyManagerFactory.JessiePSK",    PreSharedKeyManagerFactoryImpl.class.getName());
-          //put("TrustManagerFactory.SRP",        SRPTrustManagerFactory.class.getName());
+            put("KeyManagerFactory.JessieX509", X509KeyManagerFactory.class.getName());
+            put("TrustManagerFactory.JessieX509", X509TrustManagerFactory.class.getName());
+            put("KeyManagerFactory.JessiePSK", PreSharedKeyManagerFactoryImpl.class.getName());
+            //put("TrustManagerFactory.SRP",        SRPTrustManagerFactory.class.getName());
 
-          put("Mac.SSLv3HMac-MD5", SSLv3HMacMD5Impl.class.getName());
-          put("Mac.SSLv3HMac-SHA", SSLv3HMacSHAImpl.class.getName());
+            put("Mac.SSLv3HMac-MD5", SSLv3HMacMD5Impl.class.getName());
+            put("Mac.SSLv3HMac-SHA", SSLv3HMacSHAImpl.class.getName());
 
-          put("Signature.TLSv1.1-RSA", SSLRSASignatureImpl.class.getName());
-          put("Alg.Alias.Signature.TLSv1-RSA", "TLSv1.1-RSA");
-          put("Alg.Alias.Signature.SSLv3-RSA", "TLSv1.1-RSA");
+            put("Signature.TLSv1.1-RSA", SSLRSASignatureImpl.class.getName());
+            put("Alg.Alias.Signature.TLSv1-RSA", "TLSv1.1-RSA");
+            put("Alg.Alias.Signature.SSLv3-RSA", "TLSv1.1-RSA");
 
-          return null;
-        }
-      });
-  }
+            put("KeyGenerator.P_MD5", TLSKeyGenerators.TLSKeyGeneratorMD5.class.getName());
+            put("KeyGenerator.P_SHA1", TLSKeyGenerators.TLSKeyGeneratorSHA1.class.getName());
+            put("KeyGenerator.P_SHA256", TLSKeyGenerators.TLSKeyGeneratorSHA256.class.getName());
+
+            return null;
+        });
+    }
 }

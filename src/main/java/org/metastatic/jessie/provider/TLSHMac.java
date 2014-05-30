@@ -38,100 +38,172 @@ exception statement from your version.  */
 
 package org.metastatic.jessie.provider;
 
-import java.security.InvalidKeyException;
+import java.security.*;
+import java.security.spec.AlgorithmParameterSpec;
 import java.util.Map;
 
 import gnu.java.security.hash.IMessageDigest;
 import gnu.javax.crypto.mac.HMac;
 
+import javax.crypto.Mac;
+import javax.crypto.MacSpi;
+import javax.crypto.SecretKey;
+
 /**
  * The operation of this HMac is identical to normal HMacs, but this one
  * allows keys with short lengths (including zero).
  */
-class TLSHMac extends HMac
+class TLSHMac extends MacSpi
 {
 
-  // Constants.
-  // -------------------------------------------------------------------------
+    // Constants.
+    // -------------------------------------------------------------------------
 
-  private static final byte IPAD_BYTE = 0x36;
-  private static final byte OPAD_BYTE = 0x5C;
+    private static final byte IPAD_BYTE = 0x36;
+    private static final byte OPAD_BYTE = 0x5C;
 
-  // Constructor.
-  // -------------------------------------------------------------------------
+    private final Mac underlyingMac;
+    private int macSize;
 
-  TLSHMac(IMessageDigest hash)
-  {
-    super(hash);
-  }
+    // Constructor.
+    // -------------------------------------------------------------------------
 
-  // Instance methods.
-  // -------------------------------------------------------------------------
-
-  public void init(Map attributes)
-    throws InvalidKeyException, IllegalStateException
-  {
-    Integer ts = (Integer) attributes.get(TRUNCATED_SIZE);
-    truncatedSize = (ts == null ? macSize : ts.intValue());
-    if (truncatedSize < (macSize / 2)) {
-      throw new IllegalArgumentException("Truncated size too small");
-    } else if (truncatedSize < 10) {
-      throw new IllegalArgumentException("Truncated size less than 80 bits");
+    TLSHMac(String underlyingMacName) throws NoSuchAlgorithmException
+    {
+        this(Mac.getInstance(underlyingMacName));
     }
 
-    // we dont use/save the key outside this method
-    byte[] K = (byte[]) attributes.get(MAC_KEY_MATERIAL);
-    if (K == null) { // take it as an indication to re-use previous key if set
-      if (ipadHash == null)
+    TLSHMac(Mac underlyingMac)
+    {
+        this.underlyingMac = underlyingMac;
+        macSize = underlyingMac.getMacLength();
+    }
+
+    // Instance methods.
+    // -------------------------------------------------------------------------
+
+    @Override
+    protected int engineGetMacLength()
+    {
+        return macSize;
+    }
+
+    @Override
+    protected void engineInit(Key key, AlgorithmParameterSpec algorithmParameterSpec) throws InvalidKeyException, InvalidAlgorithmParameterException
+    {
+        macSize = underlyingMac.getMacLength();
+        if (algorithmParameterSpec instanceof TLSHMacParameterSpec)
         {
-          throw new InvalidKeyException("Null key");
+            int len = ((TLSHMacParameterSpec) algorithmParameterSpec).getMacLen();
+            if (len < (macSize / 2))
+            {
+                throw new InvalidAlgorithmParameterException("Truncated size too small");
+            }
+            else if (len < 10)
+            {
+                throw new InvalidAlgorithmParameterException("Truncated size less than 80 bits");
+            }
+            macSize = len;
         }
-      // we already went through the motions; ie. up to step #4.  re-use
-      underlyingHash = (IMessageDigest) ipadHash.clone();
-      return;
+        else if (algorithmParameterSpec != null)
+        {
+            throw new InvalidAlgorithmParameterException("unknown algorithm parameter type");
+        }
+        byte[] K = key.getEncoded();
+
     }
 
-    if (K.length > blockSize)
-      {
-        // (0) replace K with HASH(K) if K is larger than the hash's
-        //     block size. Then pad with zeros until it is the correct
-        //     size (the next `if').
-        underlyingHash.update(K, 0, K.length);
-        K = underlyingHash.digest();
-      }
-    if (K.length < blockSize)
-      {
-        // (1) append zeros to the end of K to create a B byte string
-        //     (e.g., if K is of length 20 bytes and B=64, then K will be
-        //     appended with 44 zero bytes 0x00)
-        int limit = (K.length > blockSize) ? blockSize : K.length;
-        byte[] newK = new byte[blockSize];
-        System.arraycopy(K, 0, newK, 0, limit);
-        K = newK;
-      }
+    @Override
+    protected void engineUpdate(byte b)
+    {
 
-    underlyingHash.reset();
-    opadHash = (IMessageDigest) underlyingHash.clone();
-    if (ipad == null)
-      {
-        ipad = new byte[blockSize];
-      }
-    // (2) XOR (bitwise exclusive-OR) the B byte string computed in step
-    //     (1) with ipad
-    // (3) append the stream of data 'text' to the B byte string resulting
-    //     from step (2)
-    // (4) apply H to the stream generated in step (3)
-    for (int i = 0; i < blockSize; i++)
-      {
-        ipad[i] = (byte)(K[i] ^ IPAD_BYTE);
-      }
-    for (int i = 0; i < blockSize; i++)
-      {
-        opadHash.update((byte)(K[i] ^ OPAD_BYTE));
-      }
+    }
 
-    underlyingHash.update(ipad, 0, blockSize);
-    ipadHash = (IMessageDigest) underlyingHash.clone();
-    K = null;
-  }
+    @Override
+    protected void engineUpdate(byte[] bytes, int i, int i2)
+    {
+
+    }
+
+    @Override
+    protected byte[] engineDoFinal()
+    {
+        return new byte[0];
+    }
+
+    @Override
+    protected void engineReset()
+    {
+
+    }
+
+    public void init(Map attributes)
+            throws InvalidKeyException, IllegalStateException
+    {
+        Integer ts = (Integer) attributes.get(TRUNCATED_SIZE);
+        truncatedSize = (ts == null ? macSize : ts.intValue());
+        if (truncatedSize < (macSize / 2))
+        {
+            throw new IllegalArgumentException("Truncated size too small");
+        } else if (truncatedSize < 10)
+        {
+            throw new IllegalArgumentException("Truncated size less than 80 bits");
+        }
+
+        // we dont use/save the key outside this method
+        byte[] K = (byte[]) attributes.get(MAC_KEY_MATERIAL);
+        if (K == null)
+        { // take it as an indication to re-use previous key if set
+            if (ipadHash == null)
+            {
+                throw new InvalidKeyException("Null key");
+            }
+            // we already went through the motions; ie. up to step #4.  re-use
+            underlyingHash = (IMessageDigest) ipadHash.clone();
+            return;
+        }
+
+        if (K.length > blockSize)
+        {
+            // (0) replace K with HASH(K) if K is larger than the hash's
+            //     block size. Then pad with zeros until it is the correct
+            //     size (the next `if').
+            underlyingHash.update(K, 0, K.length);
+            K = underlyingHash.digest();
+        }
+        if (K.length < blockSize)
+        {
+            // (1) append zeros to the end of K to create a B byte string
+            //     (e.g., if K is of length 20 bytes and B=64, then K will be
+            //     appended with 44 zero bytes 0x00)
+            int limit = (K.length > blockSize) ? blockSize : K.length;
+            byte[] newK = new byte[blockSize];
+            System.arraycopy(K, 0, newK, 0, limit);
+            K = newK;
+        }
+
+        underlyingHash.reset();
+        opadHash = (IMessageDigest) underlyingHash.clone();
+        if (ipad == null)
+        {
+            ipad = new byte[blockSize];
+        }
+        // (2) XOR (bitwise exclusive-OR) the B byte string computed in step
+        //     (1) with ipad
+        // (3) append the stream of data 'text' to the B byte string resulting
+        //     from step (2)
+        // (4) apply H to the stream generated in step (3)
+        for (int i = 0; i < blockSize; i++)
+        {
+            ipad[i] = (byte) (K[i] ^ IPAD_BYTE);
+        }
+        for (int i = 0; i < blockSize; i++)
+        {
+            opadHash.update((byte) (K[i] ^ OPAD_BYTE));
+        }
+
+        underlyingHash.update(ipad, 0, blockSize);
+        ipadHash = (IMessageDigest) underlyingHash.clone();
+        K = null;
+    }
 }
