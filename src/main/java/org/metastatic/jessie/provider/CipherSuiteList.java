@@ -80,7 +80,7 @@ public final class CipherSuiteList implements Iterable<CipherSuite>
    * @param index The index of the suite to get.
    * @return The cipher suite at that index.
    * @throws IndexOutOfBoundsException If the index is negative or is
-   * not less than {@link size()}.
+   * not less than {@link #size()}.
    */
   public CipherSuite get (final int index)
   {
@@ -119,7 +119,7 @@ public final class CipherSuiteList implements Iterable<CipherSuite>
   /**
    * Sets the size of this list. You must call this if you are adding
    * elements to the list; calling {@link
-   * #put(int,gnu.jessie.provider.CipherSuite)} does not expand the
+   * #put(int,org.metastatic.jessie.provider.CipherSuite)} does not expand the
    * list size (the same goes for removing elements, as there is no
    * <code>remove</code> method).
    *

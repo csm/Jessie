@@ -38,25 +38,24 @@ exception statement from your version.  */
 
 package org.metastatic.jessie.provider;
 
-public enum CertificateType
-{
-  X509     (0),
-  OPEN_PGP (1);
+public enum CertificateType {
+    X509(0),
+    OPEN_PGP(1);
 
-  private final int value;
+    private final int value;
 
-  private CertificateType(int value)
-  {
-    this.value = value;
-  }
+    private CertificateType(int value) {
+        this.value = value;
+    }
 
-  public static CertificateType forValue (final int value)
-  {
-    switch (value)
-      {
-        case 0: return X509;
-        case 1: return OPEN_PGP;
-        default: throw new IllegalArgumentException ("unknown certificate type: " + value);
-      }
-  }
+    public static CertificateType forValue(final int value) {
+        switch (value) {
+            case 0:
+                return X509;
+            case 1:
+                return OPEN_PGP;
+            default:
+                throw new IllegalArgumentException("unknown certificate type: " + value);
+        }
+    }
 }

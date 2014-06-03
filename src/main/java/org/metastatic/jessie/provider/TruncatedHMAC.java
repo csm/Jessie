@@ -38,9 +38,9 @@ exception statement from your version.  */
 
 package org.metastatic.jessie.provider;
 
-import gnu.javax.net.ssl.provider.Extension.Value;
-
 import java.nio.ByteBuffer;
+
+import org.metastatic.jessie.provider.Extension.Value;
 
 /**
  * The value type for the {@link Extension.Type#TRUNCATED_HMAC} extension.

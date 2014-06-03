@@ -42,42 +42,37 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.ByteBuffer;
 
-public class CertificateVerify extends Signature implements Handshake.Body
-{
+public class CertificateVerify extends Signature implements Handshake.Body {
 
-  // Contstructor.
-  // -------------------------------------------------------------------------
+    // Contstructor.
+    // -------------------------------------------------------------------------
 
-  public CertificateVerify(final ByteBuffer buffer, final SignatureAlgorithm sigAlg)
-  {
-    super(buffer, sigAlg);
-  }
+    public CertificateVerify(final ByteBuffer buffer, final SignatureAlgorithm sigAlg) {
+        super(buffer, sigAlg);
+    }
 
-  public CertificateVerify(final byte[] sigVal, final SignatureAlgorithm sigAlg)
-  {
-    super(sigVal, sigAlg);
-  }
+    public CertificateVerify(final byte[] sigVal, final SignatureAlgorithm sigAlg) {
+        super(sigVal, sigAlg);
+    }
 
-  // Instance method.
-  // -------------------------------------------------------------------------
+    // Instance method.
+    // -------------------------------------------------------------------------
 
-  public String toString()
-  {
-    return toString (null);
-  }
+    public String toString() {
+        return toString(null);
+    }
 
-  public String toString (final String prefix)
-  {
-    StringWriter str = new StringWriter ();
-    PrintWriter out = new PrintWriter (str);
-    if (prefix != null) out.print (prefix);
-    out.println("struct {");
-    String subprefix = "  ";
-    if (prefix != null)
-      subprefix = prefix + subprefix;
-    out.println (super.toString (subprefix));
-    if (prefix != null) out.print (prefix);
-    out.print ("} CertificateVerify;");
-    return str.toString();
-  }
+    public String toString(final String prefix) {
+        StringWriter str = new StringWriter();
+        PrintWriter out = new PrintWriter(str);
+        if (prefix != null) out.print(prefix);
+        out.println("struct {");
+        String subprefix = "  ";
+        if (prefix != null)
+            subprefix = prefix + subprefix;
+        out.println(super.toString(subprefix));
+        if (prefix != null) out.print(prefix);
+        out.print("} CertificateVerify;");
+        return str.toString();
+    }
 }

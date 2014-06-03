@@ -44,13 +44,18 @@ public class TLSKeyGeneratorParameterSpec implements AlgorithmParameterSpec
     private final byte[] seed;
     private final byte[] secret;
     private final int keyLength;
+    private final int macLength;
+    private final int ivLength;
     private final String algName;
 
-    public TLSKeyGeneratorParameterSpec(String algName, byte[] seed, byte[] secret, int keyLength)
+    public TLSKeyGeneratorParameterSpec(String algName, byte[] seed, byte[] secret, int keyLength,
+                                        int macLength, int ivLength)
     {
         this.seed = seed.clone();
         this.secret = secret.clone();
         this.keyLength = keyLength;
+        this.macLength = macLength;
+        this.ivLength = ivLength;
         this.algName = algName;
     }
 
@@ -67,6 +72,14 @@ public class TLSKeyGeneratorParameterSpec implements AlgorithmParameterSpec
     public int getKeyLength()
     {
         return keyLength;
+    }
+
+    public int getMacLength() {
+        return macLength;
+    }
+
+    public int getIVLength() {
+        return ivLength;
     }
 
     public String getAlgName()

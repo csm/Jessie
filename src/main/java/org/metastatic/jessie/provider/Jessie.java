@@ -95,6 +95,10 @@ public class Jessie extends Provider
             put("KeyGenerator.P_MD5", TLSKeyGenerators.TLSKeyGeneratorMD5.class.getName());
             put("KeyGenerator.P_SHA1", TLSKeyGenerators.TLSKeyGeneratorSHA1.class.getName());
             put("KeyGenerator.P_SHA256", TLSKeyGenerators.TLSKeyGeneratorSHA256.class.getName());
+            put("KeyGenerator.TLS_PRF", TLSPRFKeyGeneratorImpl.class.getName());
+
+            put("SSLCipherSuite.TLS_NULL_WITH_NULL_NULL", CipherSuite.TLS_NULL_WITH_NULL_NULL.class.getName());
+            put("Alg.Alias.SSLCipherSuite.0.0", "TLS_NULL_WITH_NULL_NULL");
 
             return null;
         });

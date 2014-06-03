@@ -38,11 +38,11 @@ exception statement from your version.  */
 
 package org.metastatic.jessie;
 
-import java.lang.reflect.InvocationTargetException;
-import java.nio.ByteBuffer;
+import javax.crypto.*;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.Security;
+import java.security.Signature;
 
 /**
  * An SSL cipher suite.
@@ -135,7 +135,15 @@ public abstract class SSLCipherSuite
         return version;
     }
 
-    public abstract void encipher(ByteBuffer in, ByteBuffer out);
+    public abstract Cipher cipher() throws NoSuchAlgorithmException, NoSuchPaddingException;
+
+    public abstract Mac mac() throws NoSuchAlgorithmException;
+
+    public abstract Signature signature() throws NoSuchAlgorithmException;
+
+    public abstract KeyAgreement keyAgreement() throws NoSuchAlgorithmException;
+
+    public abstract KeyGenerator prf(SSLProtocolVersion version) throws NoSuchAlgorithmException;
 
     private static SSLCipherSuite doGetInstance(String name, Provider provider)
             throws ClassNotFoundException, IllegalAccessException, InstantiationException, NoSuchAlgorithmException

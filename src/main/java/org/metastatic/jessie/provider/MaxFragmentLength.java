@@ -1,8 +1,8 @@
 package org.metastatic.jessie.provider;
 
-import gnu.javax.net.ssl.provider.Extension.Value;
-
 import java.nio.ByteBuffer;
+
+import org.metastatic.jessie.provider.Extension.Value;
 
 /**
  * Extension value

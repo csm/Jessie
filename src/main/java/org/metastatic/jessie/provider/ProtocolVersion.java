@@ -42,159 +42,131 @@ import java.io.InputStream;
 import java.io.IOException;
 
 public final class ProtocolVersion
-  implements Comparable<ProtocolVersion>, Constructed
-{
+        implements Comparable<ProtocolVersion>, Constructed {
 
-  // Constants and fields.
-  // -------------------------------------------------------------------------
+    // Constants and fields.
+    // -------------------------------------------------------------------------
 
-  public static final ProtocolVersion SSL_3 = new ProtocolVersion(3, 0);
-  public static final ProtocolVersion TLS_1 = new ProtocolVersion(3, 1);
-  public static final ProtocolVersion TLS_1_1 = new ProtocolVersion(3, 2);
+    public static final ProtocolVersion SSL_3 = new ProtocolVersion(3, 0);
+    public static final ProtocolVersion TLS_1 = new ProtocolVersion(3, 1);
+    public static final ProtocolVersion TLS_1_1 = new ProtocolVersion(3, 2);
+    public static final ProtocolVersion TLS_1_2 = new ProtocolVersion(3, 3);
 
-  private final int major;
-  private final int minor;
+    private final int major;
+    private final int minor;
 
-  // Constructor.
-  // -------------------------------------------------------------------------
+    // Constructor.
+    // -------------------------------------------------------------------------
 
-  private ProtocolVersion(int major, int minor)
-  {
-    this.major = major;
-    this.minor = minor;
-  }
+    private ProtocolVersion(int major, int minor) {
+        this.major = major;
+        this.minor = minor;
+    }
 
-  // Class methods.
-  // -------------------------------------------------------------------------
+    // Class methods.
+    // -------------------------------------------------------------------------
 
-  public static ProtocolVersion read(InputStream in) throws IOException
-  {
-    int major = in.read() & 0xFF;
-    int minor = in.read() & 0xFF;
-    return getInstance(major, minor);
-  }
+    public static ProtocolVersion read(InputStream in) throws IOException {
+        int major = in.read() & 0xFF;
+        int minor = in.read() & 0xFF;
+        return getInstance(major, minor);
+    }
 
-  public static ProtocolVersion forName (final String name)
-  {
-    if (name.equalsIgnoreCase ("SSLv3"))
-      return SSL_3;
-    if (name.equalsIgnoreCase ("TLSv1"))
-      return TLS_1;
-    if (name.equalsIgnoreCase("TLSv1.1"))
-      return TLS_1_1;
-    throw new IllegalArgumentException ("unknown protocol name: " + name);
-  }
+    public static ProtocolVersion forName(final String name) {
+        if (name.equalsIgnoreCase("SSLv3"))
+            return SSL_3;
+        if (name.equalsIgnoreCase("TLSv1"))
+            return TLS_1;
+        if (name.equalsIgnoreCase("TLSv1.1"))
+            return TLS_1_1;
+        throw new IllegalArgumentException("unknown protocol name: " + name);
+    }
 
-  public static ProtocolVersion getInstance(final int major, final int minor)
-  {
-    if (major == 3)
-      {
-        switch (minor)
-          {
-          case 0: return SSL_3;
-          case 1: return TLS_1;
-          case 2: return TLS_1_1;
-          }
-      }
-    return new ProtocolVersion(major, minor);
-  }
+    public static ProtocolVersion getInstance(final int major, final int minor) {
+        if (major == 3) {
+            switch (minor) {
+                case 0:
+                    return SSL_3;
+                case 1:
+                    return TLS_1;
+                case 2:
+                    return TLS_1_1;
+            }
+        }
+        return new ProtocolVersion(major, minor);
+    }
 
-  public static ProtocolVersion getInstance (final short raw_value)
-  {
-    int major = raw_value >>> 8 & 0xFF;
-    int minor = raw_value & 0xFF;
-    return getInstance (major, minor);
-  }
+    public static ProtocolVersion getInstance(final short raw_value) {
+        int major = raw_value >>> 8 & 0xFF;
+        int minor = raw_value & 0xFF;
+        return getInstance(major, minor);
+    }
 
-  // Instance methods.
-  // -------------------------------------------------------------------------
+    // Instance methods.
+    // -------------------------------------------------------------------------
 
-  public int length ()
-  {
-    return 2;
-  }
+    public int length() {
+        return 2;
+    }
 
-  public byte[] getEncoded()
-  {
-    return new byte[] {
-      (byte) major, (byte) minor
-    };
-  }
+    public byte[] getEncoded() {
+        return new byte[]{
+                (byte) major, (byte) minor
+        };
+    }
 
-  public int major()
-  {
-    return major;
-  }
+    public int major() {
+        return major;
+    }
 
-  public int minor()
-  {
-    return minor;
-  }
+    public int minor() {
+        return minor;
+    }
 
-  public int rawValue ()
-  {
-    return (major << 8) | minor;
-  }
+    public int rawValue() {
+        return (major << 8) | minor;
+    }
 
-  public boolean equals(Object o)
-  {
-    if (!(o instanceof ProtocolVersion))
-      {
-        return false;
-      }
-    return ((ProtocolVersion) o).major == this.major
-        && ((ProtocolVersion) o).minor == this.minor;
-  }
+    public boolean equals(Object o) {
+        if (!(o instanceof ProtocolVersion)) {
+            return false;
+        }
+        return ((ProtocolVersion) o).major == this.major
+                && ((ProtocolVersion) o).minor == this.minor;
+    }
 
-  public int hashCode()
-  {
-    return major << 8 | minor;
-  }
+    public int hashCode() {
+        return major << 8 | minor;
+    }
 
-  public int compareTo(ProtocolVersion that)
-  {
-    if (major > that.major)
-      {
-        return 1;
-      }
-    else if (major < that.major)
-      {
-        return -1;
-      }
+    public int compareTo(ProtocolVersion that) {
+        if (major > that.major) {
+            return 1;
+        } else if (major < that.major) {
+            return -1;
+        }
 
-    if (minor > that.minor)
-      {
-        return 1;
-      }
-    else if (minor < that.minor)
-      {
-        return -1;
-      }
-    return 0;
-  }
+        if (minor > that.minor) {
+            return 1;
+        } else if (minor < that.minor) {
+            return -1;
+        }
+        return 0;
+    }
 
-  public String toString (String prefix)
-  {
-    return toString ();
-  }
+    public String toString(String prefix) {
+        return toString();
+    }
 
-  public String toString()
-  {
-    if (this == SSL_3)
-      {
-        return "SSLv3";
-      }
-    else if (this == TLS_1)
-      {
-        return "TLSv1";
-      }
-    else if (this == TLS_1_1)
-      {
-        return "TLSv1.1";
-      }
-    else
-      {
-        return "Unsupported; major=" + major + " minor=" + minor;
-      }
-  }
+    public String toString() {
+        if (this == SSL_3) {
+            return "SSLv3";
+        } else if (this == TLS_1) {
+            return "TLSv1";
+        } else if (this == TLS_1_1) {
+            return "TLSv1.1";
+        } else {
+            return "Unsupported; major=" + major + " minor=" + minor;
+        }
+    }
 }

@@ -40,19 +40,20 @@ package org.metastatic.jessie.provider;
 import javax.crypto.KeyGenerator;
 import javax.crypto.KeyGeneratorSpi;
 import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.AlgorithmParameterSpec;
 
-public class TLSv1KeyGeneratorImpl extends KeyGeneratorSpi
+public class TLSPRFKeyGeneratorImpl extends KeyGeneratorSpi
 {
     private KeyGenerator md5gen, sha1gen;
     private int keyLength;
     private String algName;
+    private int macLength;
+    private int ivLength;
 
-    public TLSv1KeyGeneratorImpl() throws NoSuchAlgorithmException
+    public TLSPRFKeyGeneratorImpl() throws NoSuchAlgorithmException
     {
         md5gen = KeyGenerator.getInstance("P_MD5");
         sha1gen = KeyGenerator.getInstance("P_SHA1");
@@ -70,6 +71,8 @@ public class TLSv1KeyGeneratorImpl extends KeyGeneratorSpi
         if (!(algorithmParameterSpec instanceof TLSKeyGeneratorParameterSpec))
             throw new InvalidAlgorithmParameterException("need a TLSKeyGeneratorParameterSpec");
         keyLength = ((TLSKeyGeneratorParameterSpec) algorithmParameterSpec).getKeyLength();
+        macLength = ((TLSKeyGeneratorParameterSpec) algorithmParameterSpec).getMacLength();
+        ivLength = ((TLSKeyGeneratorParameterSpec) algorithmParameterSpec).getIVLength();
         algName = ((TLSKeyGeneratorParameterSpec) algorithmParameterSpec).getAlgName();
         byte[] secret = ((TLSKeyGeneratorParameterSpec) algorithmParameterSpec).getSecret();
         int l_s = (int) Math.ceil((double) secret.length / 2.0);
@@ -79,10 +82,10 @@ public class TLSv1KeyGeneratorImpl extends KeyGeneratorSpi
         System.arraycopy(secret, secret.length - l_s, shasecret, 0, l_s);
         md5gen.init(new TLSKeyGeneratorParameterSpec(((TLSKeyGeneratorParameterSpec) algorithmParameterSpec).getAlgName(),
                 ((TLSKeyGeneratorParameterSpec) algorithmParameterSpec).getSeed(),
-                md5secret, keyLength));
+                md5secret, keyLength, macLength, ivLength));
         sha1gen.init(new TLSKeyGeneratorParameterSpec(((TLSKeyGeneratorParameterSpec) algorithmParameterSpec).getAlgName(),
                 ((TLSKeyGeneratorParameterSpec) algorithmParameterSpec).getSeed(),
-                shasecret, keyLength));
+                shasecret, keyLength, macLength, ivLength));
     }
 
     @Override
@@ -94,13 +97,8 @@ public class TLSv1KeyGeneratorImpl extends KeyGeneratorSpi
     @Override
     protected SecretKey engineGenerateKey()
     {
-        byte[] md5key = md5gen.generateKey().getEncoded();
-        byte[] shakey = sha1gen.generateKey().getEncoded();
-        byte[] k = new byte[keyLength];
-        for (int i = 0; i < keyLength; i++)
-        {
-            k[i] = (byte) (md5key[i] ^ shakey[i]);
-        }
-        return new SecretKeySpec(k, algName);
+        TLSSessionKeys md5key = (TLSSessionKeys) md5gen.generateKey();
+        TLSSessionKeys shakey = (TLSSessionKeys) sha1gen.generateKey();
+        return md5key.xor(shakey);
     }
 }

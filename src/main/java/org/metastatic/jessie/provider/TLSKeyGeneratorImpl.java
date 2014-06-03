@@ -39,17 +39,16 @@ exception statement from your version.  */
 
 package org.metastatic.jessie.provider;
 
+import javax.crypto.KeyGeneratorSpi;
+import javax.crypto.Mac;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.Arrays;
-
-import javax.crypto.KeyGeneratorSpi;
-import javax.crypto.Mac;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 
 /**
  * TLSv1+ key material generator.
@@ -64,7 +63,7 @@ class TLSKeyGeneratorImpl extends KeyGeneratorSpi
     private byte[] seed;
     private byte[] secret;
     private final byte[] buffer;
-    private int keyLength;
+    private int keyLength, macLength, ivLength;
     private int idx;
     private boolean init;
     private String algName;
@@ -111,6 +110,8 @@ class TLSKeyGeneratorImpl extends KeyGeneratorSpi
         idx = 0;
         init = true;
         keyLength = ((TLSKeyGeneratorParameterSpec) algorithmParameterSpec).getKeyLength();
+        macLength = ((TLSKeyGeneratorParameterSpec) algorithmParameterSpec).getMacLength();
+        ivLength = ((TLSKeyGeneratorParameterSpec) algorithmParameterSpec).getIVLength();
         algName = ((TLSKeyGeneratorParameterSpec) algorithmParameterSpec).getAlgName();
     }
 
@@ -123,9 +124,16 @@ class TLSKeyGeneratorImpl extends KeyGeneratorSpi
     @Override
     protected SecretKey engineGenerateKey()
     {
-        byte[] keyMaterial = new byte[keyLength];
+        byte[] keyMaterial = new byte[2 * (keyLength + macLength + ivLength)];
         nextBytes(keyMaterial, 0, keyLength);
-        return new SecretKeySpec(keyMaterial, algName);
+        TLSSessionKeys.Builder builder = new TLSSessionKeys.Builder();
+        builder.withClientWriteMACKey(keyMaterial, 0, macLength)
+                .withServerWriteMACKey(keyMaterial, macLength, macLength)
+                .withClientWriteKey(keyMaterial, 2 * macLength, keyLength)
+                .withServerWriteKey(keyMaterial, 2 * macLength + keyLength, keyLength)
+                .withClientWriteIV(keyMaterial, 2 * (macLength + keyLength), ivLength)
+                .withServerWriteIV(keyMaterial, 2 * (macLength + keyLength) + ivLength, ivLength);
+        return builder.build();
     }
 
     private void nextBytes(byte[] buf, int off, int len)
