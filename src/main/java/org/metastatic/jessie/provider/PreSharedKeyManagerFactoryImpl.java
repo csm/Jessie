@@ -38,8 +38,8 @@ exception statement from your version. */
 
 package org.metastatic.jessie.provider;
 
-import gnu.javax.net.ssl.PreSharedKeyManager;
-import gnu.javax.net.ssl.PreSharedKeyManagerParameters;
+import org.metastatic.jessie.PreSharedKeyManager;
+import org.metastatic.jessie.PreSharedKeyManagerParameters;
 
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyManagementException;
@@ -58,61 +58,64 @@ import javax.net.ssl.ManagerFactoryParameters;
  * @author Casey Marshall (csm@gnu.org)
  */
 public class PreSharedKeyManagerFactoryImpl
-  extends KeyManagerFactorySpi
+        extends KeyManagerFactorySpi
 {
-  PreSharedKeyManagerParameters params;
+    PreSharedKeyManagerParameters params;
 
-  /* (non-Javadoc)
-   * @see javax.net.ssl.KeyManagerFactorySpi#engineGetKeyManagers()
-   */
-  @Override protected KeyManager[] engineGetKeyManagers()
-  {
-    if (params == null)
-      throw new IllegalStateException("not initialized");
-    return new KeyManager[] { new Manager() };
-  }
-
-  /* (non-Javadoc)
-   * @see javax.net.ssl.KeyManagerFactorySpi#engineInit(javax.net.ssl.ManagerFactoryParameters)
-   */
-  @Override protected void engineInit(ManagerFactoryParameters params)
-    throws InvalidAlgorithmParameterException
-  {
-    if (!(params instanceof PreSharedKeyManagerParameters))
-      throw new InvalidAlgorithmParameterException("only supports gnu.javax.net.ssl.PreSharedKeyManagerParameters");
-    params = (PreSharedKeyManagerParameters) params;
-  }
-
-  /* (non-Javadoc)
-   * @see javax.net.ssl.KeyManagerFactorySpi#engineInit(java.security.KeyStore, char[])
-   */
-  @Override protected void engineInit(KeyStore store, char[] passwd)
-    throws KeyStoreException, NoSuchAlgorithmException,
-           UnrecoverableKeyException
-  {
-    // XXX Could implement this.
-  }
-
-  class Manager implements PreSharedKeyManager
-  {
-    Manager()
+    /* (non-Javadoc)
+     * @see javax.net.ssl.KeyManagerFactorySpi#engineGetKeyManagers()
+     */
+    @Override
+    protected KeyManager[] engineGetKeyManagers()
     {
+        if (params == null)
+            throw new IllegalStateException("not initialized");
+        return new KeyManager[]{new Manager()};
     }
 
     /* (non-Javadoc)
-     * @see gnu.javax.net.ssl.PreSharedKeyManager#getKey(java.lang.String)
+     * @see javax.net.ssl.KeyManagerFactorySpi#engineInit(javax.net.ssl.ManagerFactoryParameters)
      */
-    public SecretKey getKey(String name) throws KeyManagementException
+    @Override
+    protected void engineInit(ManagerFactoryParameters params)
+            throws InvalidAlgorithmParameterException
     {
-      return params.getKey(name);
+        if (!(params instanceof PreSharedKeyManagerParameters))
+            throw new InvalidAlgorithmParameterException("only supports gnu.javax.net.ssl.PreSharedKeyManagerParameters");
+        params = (PreSharedKeyManagerParameters) params;
     }
 
-    public String chooseIdentityHint()
+    /* (non-Javadoc)
+     * @see javax.net.ssl.KeyManagerFactorySpi#engineInit(java.security.KeyStore, char[])
+     */
+    @Override
+    protected void engineInit(KeyStore store, char[] passwd)
+            throws KeyStoreException, NoSuchAlgorithmException,
+            UnrecoverableKeyException
     {
-      Iterator<String> it = params.identities();
-      if (it.hasNext())
-        return it.next();
-      return null;
+        // XXX Could implement this.
     }
-  }
+
+    class Manager implements PreSharedKeyManager
+    {
+        Manager()
+        {
+        }
+
+        /* (non-Javadoc)
+         * @see gnu.javax.net.ssl.PreSharedKeyManager#getKey(java.lang.String)
+         */
+        public SecretKey getKey(String name) throws KeyManagementException
+        {
+            return params.getKey(name);
+        }
+
+        public String chooseIdentityHint()
+        {
+            Iterator<String> it = params.identities();
+            if (it.hasNext())
+                return it.next();
+            return null;
+        }
+    }
 }

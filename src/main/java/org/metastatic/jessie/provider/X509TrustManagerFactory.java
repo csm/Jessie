@@ -66,10 +66,8 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactorySpi;
 import javax.net.ssl.X509TrustManager;
 
-import gnu.java.security.action.GetPropertyAction;
-import gnu.java.security.x509.X509CertPath;
-import gnu.javax.net.ssl.NullManagerParameters;
-import gnu.javax.net.ssl.StaticTrustAnchors;
+import org.metastatic.jessie.NullManagerParameters;
+import org.metastatic.jessie.StaticTrustAnchors;
 
 /**
  * This class implements a {@link javax.net.ssl.TrustManagerFactory} engine
@@ -78,218 +76,204 @@ import gnu.javax.net.ssl.StaticTrustAnchors;
 public class X509TrustManagerFactory extends TrustManagerFactorySpi
 {
 
-  // Constants and fields.
-  // -------------------------------------------------------------------------
+    // Constants and fields.
+    // -------------------------------------------------------------------------
 
-  private static final String sep
-    = AccessController.doPrivileged(new GetPropertyAction("file.separator"));
+    private static final String sep
+            = AccessController.doPrivileged((java.security.PrivilegedAction<String>) () -> System.getProperty("file.separator"));
 
-  /**
-   * The location of the JSSE key store.
-   */
-  private static final String JSSE_CERTS
-    = AccessController.doPrivileged(new GetPropertyAction("java.home"))
-      + sep + "lib" + sep + "security" + sep + "jssecerts";
+    /**
+     * The location of the JSSE key store.
+     */
+    private static final String JSSE_CERTS
+            = AccessController.doPrivileged((java.security.PrivilegedAction<String>) () -> System.getProperty("java.home"))
+            + sep + "lib" + sep + "security" + sep + "jssecerts";
 
-  /**
-   * The location of the system key store, containing the CA certs.
-   */
-  private static final String CA_CERTS
-    = AccessController.doPrivileged(new GetPropertyAction("java.home"))
-      + sep + "lib" + sep + "security" + sep + "cacerts";
+    /**
+     * The location of the system key store, containing the CA certs.
+     */
+    private static final String CA_CERTS
+            = AccessController.doPrivileged((java.security.PrivilegedAction<String>) () -> System.getProperty("java.home"))
+            + sep + "lib" + sep + "security" + sep + "cacerts";
 
-  private Manager current;
+    private Manager current;
 
-  // Construtors.
-  // -------------------------------------------------------------------------
+    // Construtors.
+    // -------------------------------------------------------------------------
 
-  public X509TrustManagerFactory()
-  {
-    super();
-  }
-
-  // Instance methods.
-  // -------------------------------------------------------------------------
-
-  protected TrustManager[] engineGetTrustManagers()
-  {
-    if (current == null)
-      {
-        throw new IllegalStateException("not initialized");
-      }
-    return new TrustManager[] { current };
-  }
-
-  protected void engineInit(ManagerFactoryParameters params)
-    throws InvalidAlgorithmParameterException
-  {
-    if (params instanceof StaticTrustAnchors)
-      {
-        current = new Manager(((StaticTrustAnchors) params).getCertificates());
-      }
-    else if (params instanceof NullManagerParameters)
-      {
-        current = new Manager(new X509Certificate[0]);
-      }
-    else
-      {
-        throw new InvalidAlgorithmParameterException();
-      }
-  }
-
-  protected void engineInit(KeyStore store) throws KeyStoreException
-  {
-    if (store == null)
-      {
-        GetPropertyAction gpa = new GetPropertyAction("javax.net.ssl.trustStoreType");
-        String s = AccessController.doPrivileged(gpa);
-        if (s == null)
-          s = KeyStore.getDefaultType();
-        store = KeyStore.getInstance(s);
-        try
-          {
-            s = AccessController.doPrivileged(gpa.setParameters("javax.net.ssl.trustStore"));
-            FileInputStream in = null;
-            if (s == null)
-              {
-                try
-                  {
-                    in = new FileInputStream(JSSE_CERTS);
-                  }
-                catch (IOException e)
-                  {
-                    in = new FileInputStream(CA_CERTS);
-                  }
-              }
-            else
-              {
-                in = new FileInputStream(s);
-              }
-            String p = AccessController.doPrivileged(gpa.setParameters("javax.net.ssl.trustStorePassword"));
-            store.load(in, p != null ? p.toCharArray() : null);
-          }
-        catch (IOException ioe)
-          {
-            throw new KeyStoreException(ioe);
-          }
-        catch (CertificateException ce)
-          {
-            throw new KeyStoreException(ce);
-          }
-        catch (NoSuchAlgorithmException nsae)
-          {
-            throw new KeyStoreException(nsae);
-          }
-      }
-
-    LinkedList<X509Certificate> l = new LinkedList<X509Certificate>();
-    Enumeration aliases = store.aliases();
-    while (aliases.hasMoreElements())
-      {
-        String alias = (String) aliases.nextElement();
-        if (!store.isCertificateEntry(alias))
-          continue;
-        Certificate c = store.getCertificate(alias);
-        if (!(c instanceof X509Certificate))
-          continue;
-        l.add((X509Certificate) c);
-      }
-    current = this.new Manager(l.toArray(new X509Certificate[l.size()]));
-  }
-
-  // Inner class.
-  // -------------------------------------------------------------------------
-
-  /**
-   * The actual manager implementation returned.
-   */
-  private class Manager implements X509TrustManager
-  {
-
-    // Fields.
-    // -----------------------------------------------------------------------
-
-    private final Set<TrustAnchor> anchors;
-
-    // Constructor.
-    // -----------------------------------------------------------------------
-
-    Manager(X509Certificate[] trusted)
+    public X509TrustManagerFactory()
     {
-      anchors = new HashSet<TrustAnchor>();
-      if (trusted != null)
+        super();
+    }
+
+    // Instance methods.
+    // -------------------------------------------------------------------------
+
+    protected TrustManager[] engineGetTrustManagers()
+    {
+        if (current == null)
         {
-          for (X509Certificate cert : trusted)
+            throw new IllegalStateException("not initialized");
+        }
+        return new TrustManager[]{current};
+    }
+
+    protected void engineInit(ManagerFactoryParameters params)
+            throws InvalidAlgorithmParameterException
+    {
+        if (params instanceof StaticTrustAnchors)
+        {
+            current = new Manager(((StaticTrustAnchors) params).getCertificates());
+        }
+        else if (params instanceof NullManagerParameters)
+        {
+            current = new Manager(new X509Certificate[0]);
+        }
+        else
+        {
+            throw new InvalidAlgorithmParameterException();
+        }
+    }
+
+    protected void engineInit(KeyStore store) throws KeyStoreException
+    {
+        if (store == null)
+        {
+            String s = AccessController.doPrivileged((java.security.PrivilegedAction<String>) () -> System.getProperty("javax.net.ssl.trustStoreType"));
+            if (s == null)
+                s = KeyStore.getDefaultType();
+            store = KeyStore.getInstance(s);
+            try
             {
-              anchors.add(new TrustAnchor(cert, null));
+                s = AccessController.doPrivileged((java.security.PrivilegedAction<String>) () -> System.getProperty("javax.net.ssl.trustStore"));
+                FileInputStream in = null;
+                if (s == null)
+                {
+                    try
+                    {
+                        in = new FileInputStream(JSSE_CERTS);
+                    }
+                    catch (IOException e)
+                    {
+                        in = new FileInputStream(CA_CERTS);
+                    }
+                }
+                else
+                {
+                    in = new FileInputStream(s);
+                }
+                String p = AccessController.doPrivileged((java.security.PrivilegedAction<String>) () -> System.getProperty("javax.net.ssl.trustStorePassword"));
+                store.load(in, p != null ? p.toCharArray() : null);
+            }
+            catch (IOException | NoSuchAlgorithmException | CertificateException ioe)
+            {
+                throw new KeyStoreException(ioe);
+            }
+        }
+
+        LinkedList<X509Certificate> l = new LinkedList<X509Certificate>();
+        Enumeration aliases = store.aliases();
+        while (aliases.hasMoreElements())
+        {
+            String alias = (String) aliases.nextElement();
+            if (!store.isCertificateEntry(alias))
+                continue;
+            Certificate c = store.getCertificate(alias);
+            if (!(c instanceof X509Certificate))
+                continue;
+            l.add((X509Certificate) c);
+        }
+        current = this.new Manager(l.toArray(new X509Certificate[l.size()]));
+    }
+
+    // Inner class.
+    // -------------------------------------------------------------------------
+
+    /**
+     * The actual manager implementation returned.
+     */
+    private class Manager implements X509TrustManager
+    {
+
+        // Fields.
+        // -----------------------------------------------------------------------
+
+        private final Set<TrustAnchor> anchors;
+
+        // Constructor.
+        // -----------------------------------------------------------------------
+
+        Manager(X509Certificate[] trusted)
+        {
+            anchors = new HashSet<TrustAnchor>();
+            if (trusted != null)
+            {
+                for (X509Certificate cert : trusted)
+                {
+                    anchors.add(new TrustAnchor(cert, null));
+                }
+            }
+        }
+
+        // Instance methodns.
+        // -----------------------------------------------------------------------
+
+        public void checkClientTrusted(X509Certificate[] chain, String authType)
+                throws CertificateException
+        {
+            checkTrusted(chain, authType);
+        }
+
+        public void checkServerTrusted(X509Certificate[] chain, String authType)
+                throws CertificateException
+        {
+            checkTrusted(chain, authType);
+        }
+
+        public X509Certificate[] getAcceptedIssuers()
+        {
+            return anchors.toArray(new X509Certificate[anchors.size()]);
+        }
+
+        // Own methods.
+        // -----------------------------------------------------------------------
+
+        private void checkTrusted(X509Certificate[] chain, String authType)
+                throws CertificateException
+        {
+            CertPathValidator validator = null;
+
+            try
+            {
+                validator = CertPathValidator.getInstance("PKIX");
+            } catch (NoSuchAlgorithmException nsae)
+            {
+                throw new CertificateException(nsae);
+            }
+
+            CertPath path = new BasicCertPath(chain);
+
+            PKIXParameters params = null;
+            try
+            {
+                params = new PKIXParameters(anchors);
+                // XXX we probably do want to enable revocation, but it's a pain
+                // in the ass.
+                params.setRevocationEnabled(false);
+            }
+            catch (InvalidAlgorithmParameterException iape)
+            {
+                throw new CertificateException(iape);
+            }
+
+            try
+            {
+                validator.validate(path, params);
+            }
+            catch (CertPathValidatorException | InvalidAlgorithmParameterException cpve)
+            {
+                throw new CertificateException(cpve);
             }
         }
     }
-
-    // Instance methodns.
-    // -----------------------------------------------------------------------
-
-    public void checkClientTrusted(X509Certificate[] chain, String authType)
-      throws CertificateException
-    {
-      checkTrusted(chain, authType);
-    }
-
-    public void checkServerTrusted(X509Certificate[] chain, String authType)
-      throws CertificateException
-    {
-      checkTrusted(chain, authType);
-    }
-
-    public X509Certificate[] getAcceptedIssuers()
-    {
-      return anchors.toArray(new X509Certificate[anchors.size()]);
-    }
-
-    // Own methods.
-    // -----------------------------------------------------------------------
-
-    private void checkTrusted(X509Certificate[] chain, String authType)
-      throws CertificateException
-    {
-      CertPathValidator validator = null;
-
-      try
-        {
-          validator = CertPathValidator.getInstance("PKIX");
-        }
-      catch (NoSuchAlgorithmException nsae)
-        {
-          throw new CertificateException(nsae);
-        }
-
-      CertPath path = new X509CertPath(Arrays.asList(chain));
-
-      PKIXParameters params = null;
-      try
-        {
-          params = new PKIXParameters(anchors);
-          // XXX we probably do want to enable revocation, but it's a pain
-          // in the ass.
-          params.setRevocationEnabled(false);
-        }
-      catch (InvalidAlgorithmParameterException iape)
-        {
-          throw new CertificateException(iape);
-        }
-
-      try
-        {
-          validator.validate(path, params);
-        }
-      catch (CertPathValidatorException cpve)
-        {
-          throw new CertificateException(cpve);
-        }
-      catch (InvalidAlgorithmParameterException iape)
-        {
-          throw new CertificateException(iape);
-        }
-    }
-  }
 }

@@ -38,7 +38,7 @@ exception statement from your version.  */
 
 package org.metastatic.jessie;
 
-public enum SSLProtocolVersion
+public enum SSLProtocolVersion implements Comparable<SSLProtocolVersion>
 {
     SSLv3(3, 0),
     TLSv1(3, 1),

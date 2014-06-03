@@ -75,8 +75,8 @@ import javax.net.ssl.KeyManagerFactorySpi;
 import javax.net.ssl.ManagerFactoryParameters;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.X509ExtendedKeyManager;
-import gnu.javax.net.ssl.NullManagerParameters;
-import gnu.javax.net.ssl.PrivateCredentials;
+import org.metastatic.jessie.NullManagerParameters;
+import org.metastatic.jessie.PrivateCredentials;
 
 /**
  * This class implements a {@link javax.net.ssl.KeyManagerFactory} engine

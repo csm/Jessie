@@ -38,56 +38,53 @@ exception statement from your version. */
 
 package org.metastatic.jessie.provider;
 
-import gnu.classpath.debug.Component;
-import gnu.classpath.debug.SystemLogger;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author Casey Marshall (csm@gnu.org)
  */
 public abstract class DelegatedTask implements Runnable
 {
-  private static final SystemLogger logger = SystemLogger.SYSTEM;
-  private boolean hasRun;
-  protected Throwable thrown;
+    private static final Logger logger = Logger.getLogger(DelegatedTask.class.getName());
+    private final AtomicBoolean hasRun;
+    protected Throwable thrown;
 
-  protected DelegatedTask()
-  {
-    hasRun = false;
-  }
+    protected DelegatedTask()
+    {
+        hasRun = new AtomicBoolean(false);
+    }
 
-  public final void run()
-  {
-    if (hasRun)
-      throw new IllegalStateException("task already ran");
-    try
-      {
-        if (Debug.DEBUG)
-          logger.logv(Component.SSL_DELEGATED_TASK,
-                      "running delegated task {0} in {1}", this,
-                      Thread.currentThread());
-        implRun();
-      }
-    catch (Throwable t)
-      {
-        if (Debug.DEBUG)
-          logger.log(Component.SSL_DELEGATED_TASK, "task threw exception", t);
-        thrown = t;
-      }
-    finally
-      {
-        hasRun = true;
-      }
-  }
+    public final void run()
+    {
+        if (!hasRun.compareAndSet(false, true))
+            throw new IllegalStateException("task already ran");
+        try
+        {
+            if (Debug.DEBUG)
+                logger.log(Level.FINE,
+                           "running delegated task {0} in {1}",
+                           new Object[] { this, Thread.currentThread() });
+            implRun();
+        }
+        catch (Throwable t)
+        {
+            if (Debug.DEBUG)
+                logger.log(Level.FINE, "task threw exception", t);
+            thrown = t;
+        }
+    }
 
-  public final boolean hasRun()
-  {
-    return hasRun;
-  }
+    public final boolean hasRun()
+    {
+        return hasRun.get();
+    }
 
-  public final Throwable thrown()
-  {
-    return thrown;
-  }
+    public final Throwable thrown()
+    {
+        return thrown;
+    }
 
-  protected abstract void implRun() throws Throwable;
+    protected abstract void implRun() throws Throwable;
 }

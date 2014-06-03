@@ -66,7 +66,7 @@ public class Jessie extends Provider
     public Jessie()
     {
         super("Jessie", VERSION_DOUBLE,
-                "Implementing TLSv1.1, with SSLv3, TLSv1.0 compatibility modes; "
+                "Implementing TLSv1.2, with TLSv1.0, TLSv1.1 compatibility modes; "
                         + "X.509 Key Manager Factory; "
                         + "X.509 Trust Manager Factory; "
                         + "SSLv3 MD5 and SHA Mac."
@@ -84,9 +84,6 @@ public class Jessie extends Provider
             put("TrustManagerFactory.JessieX509", X509TrustManagerFactory.class.getName());
             put("KeyManagerFactory.JessiePSK", PreSharedKeyManagerFactoryImpl.class.getName());
             //put("TrustManagerFactory.SRP",        SRPTrustManagerFactory.class.getName());
-
-            put("Mac.SSLv3HMac-MD5", SSLv3HMacMD5Impl.class.getName());
-            put("Mac.SSLv3HMac-SHA", SSLv3HMacSHAImpl.class.getName());
 
             put("Signature.TLSv1.1-RSA", SSLRSASignatureImpl.class.getName());
             put("Alg.Alias.Signature.TLSv1-RSA", "TLSv1.1-RSA");

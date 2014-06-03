@@ -38,10 +38,7 @@ exception statement from your version.  */
 
 package org.metastatic.jessie.provider;
 
-import javax.crypto.Cipher;
-import javax.crypto.KeyAgreement;
-import javax.crypto.Mac;
-import javax.crypto.NoSuchPaddingException;
+import javax.crypto.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -90,6 +87,7 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                     "TLS_RSA_WITH_NULL_SHA", false);
         }
     }
+    @Deprecated
     public static final class TLS_RSA_EXPORT_WITH_RC4_40_MD5 extends CipherSuite {
         public TLS_RSA_EXPORT_WITH_RC4_40_MD5() {
             super(CipherAlgorithm.RC4,
@@ -99,6 +97,7 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                     "TLS_RSA_EXPORT_WITH_RC4_40_MD5", false);
         }
     }
+    @Deprecated
     public static final class TLS_RSA_WITH_RC4_128_MD5 extends CipherSuite {
         public TLS_RSA_WITH_RC4_128_MD5() {
             super(CipherAlgorithm.RC4,
@@ -108,6 +107,7 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                     "TLS_RSA_WITH_RC4_128_MD5", false);
         }
     }
+    @Deprecated
     public static final class TLS_RSA_WITH_RC4_128_SHA extends CipherSuite {
         public TLS_RSA_WITH_RC4_128_SHA() {
             super(CipherAlgorithm.RC4,
@@ -117,6 +117,7 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                     "TLS_RSA_WITH_RC4_128_SHA", false);
         }
     }
+    @Deprecated
     public static final class TLS_RSA_EXPORT_WITH_DES40_CBC_SHA extends CipherSuite {
         public TLS_RSA_EXPORT_WITH_DES40_CBC_SHA() {
             super(CipherAlgorithm.DES,
@@ -126,6 +127,7 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                     "TLS_RSA_EXPORT_WITH_DES40_CBC_SHA", true);
         }
     }
+    @Deprecated
     public static final class TLS_RSA_WITH_DES_CBC_SHA extends CipherSuite {
         public TLS_RSA_WITH_DES_CBC_SHA() {
             super(CipherAlgorithm.DES,
@@ -135,6 +137,7 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                     "TLS_RSA_WITH_DES_CBC_SHA", true);
         }
     }
+    @Deprecated
     public static final class TLS_RSA_WITH_3DES_EDE_CBC_SHA extends CipherSuite {
         public TLS_RSA_WITH_3DES_EDE_CBC_SHA() {
             super(CipherAlgorithm.DESede,
@@ -144,6 +147,7 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                     "TLS_RSA_WITH_3DES_EDE_CBC_SHA", true);
         }
     }
+    @Deprecated
     public static final class TLS_DH_DSS_EXPORT_WITH_DES40_CBC_SHA extends CipherSuite {
         public TLS_DH_DSS_EXPORT_WITH_DES40_CBC_SHA() {
             super(CipherAlgorithm.DES,
@@ -153,6 +157,7 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                     "TLS_DH_DSS_EXPORT_WITH_DES40_CBC_SHA", true);
         }
     }
+    @Deprecated
     public static final class TLS_DH_DSS_WITH_DES_CBC_SHA extends CipherSuite {
         public TLS_DH_DSS_WITH_DES_CBC_SHA() {
             super(CipherAlgorithm.DES,
@@ -162,6 +167,7 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                     "TLS_DH_DSS_WITH_DES_CBC_SHA", true);
         }
     }
+    @Deprecated
     public static final class TLS_DH_DSS_WITH_3DES_EDE_CBC_SHA extends CipherSuite {
         public TLS_DH_DSS_WITH_3DES_EDE_CBC_SHA() {
             super(CipherAlgorithm.DESede,
@@ -171,6 +177,7 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                     "TLS_DH_DSS_WITH_3DES_EDE_CBC_SHA", true);
         }
     }
+    @Deprecated
     public static final class TLS_DH_RSA_EXPORT_WITH_DES40_CBC_SHA extends CipherSuite {
         public TLS_DH_RSA_EXPORT_WITH_DES40_CBC_SHA() {
             super(CipherAlgorithm.DES,
@@ -180,6 +187,7 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                     "TLS_DH_RSA_EXPORT_WITH_DES40_CBC_SHA", true);
         }
     }
+    @Deprecated
     public static final class TLS_DH_RSA_WITH_DES_CBC_SHA extends CipherSuite {
         public TLS_DH_RSA_WITH_DES_CBC_SHA() {
             super(CipherAlgorithm.DES,
@@ -189,6 +197,7 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                     "TLS_DH_RSA_WITH_DES_CBC_SHA", true);
         }
     }
+    @Deprecated
     public static final class TLS_DH_RSA_WITH_3DES_EDE_CBC_SHA extends CipherSuite {
         public TLS_DH_RSA_WITH_3DES_EDE_CBC_SHA() {
             super(CipherAlgorithm.DESede,
@@ -198,6 +207,7 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                     "TLS_DH_RSA_WITH_3DES_EDE_CBC_SHA", true);
         }
     }
+    @Deprecated
     public static final class TLS_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA extends CipherSuite {
         public TLS_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA() {
             super(CipherAlgorithm.DES,
@@ -207,6 +217,7 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                     "TLS_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA", true);
         }
     }
+    @Deprecated
     public static final class TLS_DHE_DSS_WITH_DES_CBC_SHA extends CipherSuite {
         public TLS_DHE_DSS_WITH_DES_CBC_SHA() {
             super(CipherAlgorithm.DES,
@@ -216,6 +227,7 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                     "TLS_DHE_DSS_WITH_DES_CBC_SHA", true);
         }
     }
+    @Deprecated
     public static final class TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA extends CipherSuite {
         public TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA() {
             super(CipherAlgorithm.DESede,
@@ -225,6 +237,7 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                     "TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA", true);
         }
     }
+    @Deprecated
     public static final class TLS_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA extends CipherSuite {
         public TLS_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA() {
             super(CipherAlgorithm.DES,
@@ -234,6 +247,7 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                     "TLS_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA", true);
         }
     }
+    @Deprecated
     public static final class TLS_DHE_RSA_WITH_DES_CBC_SHA extends CipherSuite {
         public TLS_DHE_RSA_WITH_DES_CBC_SHA() {
             super(CipherAlgorithm.DES,
@@ -243,6 +257,7 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                     "TLS_DHE_RSA_WITH_DES_CBC_SHA", true);
         }
     }
+    @Deprecated
     public static final class TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA extends CipherSuite {
         public TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA() {
             super(CipherAlgorithm.DESede,
@@ -345,64 +360,8 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
         }
     }
 
-    // Secure remote password (SRP) ciphersuites
-    // Actual ID values are TBD, so these are omitted until they are specified.
-  /*public static final class  TLS_SRP_SHA_WITH_3DES_EDE_CBC_SHA  extends CipherSuite {
-    super (CipherAlgorithm.DESede,
-                     KeyExchangeAlgorithm.SRP,
-                     SignatureAlgorithm.ANONYMOUS,
-                     MacAlgorithm.SHA, 24, 0x00, 0x50,
-                     "TLS_SRP_SHA_WITH_3DES_EDE_CBC_SHA");
-  public static final class  TLS_SRP_SHA_RSA_WITH_3DES_EDE_CBC_SHA  extends CipherSuite {
-    super (CipherAlgorithm.DESede,
-                     KeyExchangeAlgorithm.SRP,
-                     SignatureAlgorithm.RSA,
-                     MacAlgorithm.SHA, 24, 0x00, 0x51,
-                     "TLS_SRP_SHA_RSA_WITH_3DES_EDE_CBC_SHA");
-  public static final class  TLS_SRP_SHA_DSS_WITH_3DES_EDE_CBC_SHA  extends CipherSuite {
-    super (CipherAlgorithm.DESede,
-                     KeyExchangeAlgorithm.SRP,
-                     SignatureAlgorithm.DSA,
-                     MacAlgorithm.SHA, 24, 0x00, 0x52,
-                     "TLS_SRP_SHA_DSS_WITH_3DES_EDE_CBC_SHA");
-  public static final class  TLS_SRP_SHA_WITH_AES_128_CBC_SHA  extends CipherSuite {
-    super (CipherAlgorithm.AES,
-                     KeyExchangeAlgorithm.SRP,
-                     SignatureAlgorithm.ANONYMOUS,
-                     MacAlgorithm.SHA, 16, 0x00, 0x53,
-                     "TLS_SRP_SHA_WITH_AES_128_CBC_SHA");
-  public static final class  TLS_SRP_SHA_RSA_WITH_AES_128_CBC_SHA  extends CipherSuite {
-    super (CipherAlgorithm.AES,
-                     KeyExchangeAlgorithm.SRP,
-                     SignatureAlgorithm.RSA,
-                     MacAlgorithm.SHA, 16, 0x00, 0x54,
-                     "TLS_SRP_SHA_RSA_WITH_AES_128_CBC_SHA");
-  public static final class  TLS_SRP_SHA_DSS_WITH_AES_128_CBC_SHA  extends CipherSuite {
-    super (CipherAlgorithm.AES,
-                     KeyExchangeAlgorithm.SRP,
-                     SignatureAlgorithm.DSA,
-                     MacAlgorithm.SHA, 16, 0x00, 0x55,
-                     "TLS_SRP_SHA_DSS_WITH_AES_128_CBC_SHA");
-  public static final class  TLS_SRP_SHA_WITH_AES_256_CBC_SHA  extends CipherSuite {
-    super (CipherAlgorithm.AES,
-                     KeyExchangeAlgorithm.SRP,
-                     SignatureAlgorithm.ANONYMOUS,
-                     MacAlgorithm.SHA, 32, 0x00, 0x56,
-                     "TLS_SRP_SHA_WITH_AES_256_CBC_SHA");
-  public static final class  TLS_SRP_SHA_RSA_WITH_AES_256_CBC_SHA  extends CipherSuite {
-    super (CipherAlgorithm.AES,
-                     KeyExchangeAlgorithm.SRP,
-                     SignatureAlgorithm.RSA,
-                     MacAlgorithm.SHA, 32, 0x00, 0x57,
-                     "TLS_SRP_SHA_RSA_WITH_AES_256_CBC_SHA");
-  public static final class  TLS_SRP_SHA_DSS_WITH_AES_256_CBC_SHA  extends CipherSuite {
-    super (CipherAlgorithm.AES,
-                     KeyExchangeAlgorithm.SRP,
-                     SignatureAlgorithm.DSA,
-                     MacAlgorithm.SHA, 32, 0x00, 0x58,
-                     "TLS_SRP_SHA_DSS_WITH_AES_256_CBC_SHA");*/
-
     // Pre-shared key suites.
+    @Deprecated
     public static final class  TLS_PSK_WITH_RC4_128_SHA  extends CipherSuite {
         public TLS_PSK_WITH_RC4_128_SHA() {
             super(CipherAlgorithm.RC4,
@@ -412,6 +371,7 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                     "TLS_PSK_WITH_RC4_128_SHA", true);
         }
     }
+    @Deprecated
     public static final class  TLS_PSK_WITH_3DES_EDE_CBC_SHA  extends CipherSuite {
         public TLS_PSK_WITH_3DES_EDE_CBC_SHA() {
             super(CipherAlgorithm.DESede,
@@ -440,6 +400,7 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
         }
     }
 
+    @Deprecated
     public static final class  TLS_DHE_PSK_WITH_RC4_128_SHA  extends CipherSuite {
         public TLS_DHE_PSK_WITH_RC4_128_SHA() {
             super(CipherAlgorithm.RC4,
@@ -449,6 +410,7 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                     "TLS_DHE_PSK_WITH_RC4_128_SHA", false);
         }
     }
+    @Deprecated
     public static final class  TLS_DHE_PSK_WITH_3DES_EDE_CBC_SHA  extends CipherSuite {
         public TLS_DHE_PSK_WITH_3DES_EDE_CBC_SHA() {
             super(CipherAlgorithm.DESede,
@@ -477,6 +439,7 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
         }
     }
 
+    @Deprecated
     public static final class  TLS_RSA_PSK_WITH_RC4_128_SHA  extends CipherSuite {
         public TLS_RSA_PSK_WITH_RC4_128_SHA() {
             super(CipherAlgorithm.RC4,
@@ -486,6 +449,7 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                     "TLS_RSA_PSK_WITH_RC4_128_SHA", false);
         }
     }
+    @Deprecated
     public static final class  TLS_RSA_PSK_WITH_3DES_EDE_CBC_SHA  extends CipherSuite {
         public TLS_RSA_PSK_WITH_3DES_EDE_CBC_SHA() {
             super(CipherAlgorithm.DESede,
@@ -513,99 +477,6 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                     "TLS_RSA_PSK_WITH_AES_256_CBC_SHA", true);
         }
     }
-
-    // Ciphersuites from the OpenPGP extension draft.
-    // These disappeared from a more recent draft.
-/*  public static final class  TLS_DHE_DSS_WITH_CAST_128_CBC_SHA  extends CipherSuite {
-    super (CipherAlgorithm.CAST5,
-                     KeyExchangeAlgorithm.DIFFIE_HELLMAN, true,
-                     SignatureAlgorithm.DSA,
-                     MacAlgorithm.SHA, 16, 0x00, 0x70,
-                     "TLS_DHE_DSS_WITH_CAST_128_CBC_SHA");
-  public static final class  TLS_DHE_DSS_WITH_CAST_128_CBC_RMD  extends CipherSuite {
-    super (CipherAlgorithm.CAST5,
-                     KeyExchangeAlgorithm.DIFFIE_HELLMAN, true,
-                     SignatureAlgorithm.DSA,
-                     MacAlgorithm.HMAC_RMD, 16, 0x00, 0x71,
-                     "TLS_DHE_DSS_WITH_CAST_128_CBC_RMD");
-  public static final class  TLS_DHE_DSS_WITH_3DES_EDE_CBC_RMD  extends CipherSuite {
-    super (CipherAlgorithm.DESede,
-                     KeyExchangeAlgorithm.DIFFIE_HELLMAN, true,
-                     SignatureAlgorithm.DSA,
-                     MacAlgorithm.HMAC_RMD, 24, 0x00, 0x72,
-                     "TLS_DHE_DSS_WITH_3DES_EDE_CBC_RMD");
-  public static final class  TLS_DHE_DSS_WITH_AES_128_CBC_RMD  extends CipherSuite {
-    super (CipherAlgorithm.AES,
-                     KeyExchangeAlgorithm.DIFFIE_HELLMAN, true,
-                     SignatureAlgorithm.DSA,
-                     MacAlgorithm.HMAC_RMD, 16, 0x00, 0x73,
-                     "TLS_DHE_DSS_WITH_AES_128_CBC_RMD");
-  public static final class  TLS_DHE_DSS_WITH_AES_256_CBC_RMD  extends CipherSuite {
-    super (CipherAlgorithm.AES,
-                     KeyExchangeAlgorithm.DIFFIE_HELLMAN, true,
-                     SignatureAlgorithm.DSA,
-                     MacAlgorithm.HMAC_RMD, 32, 0x00, 0x74,
-                     "TLS_DHE_DSS_WITH_AES_256_CBC_RMD");
-  public static final class  TLS_DHE_RSA_WITH_CAST_128_CBC_SHA  extends CipherSuite {
-    super (CipherAlgorithm.CAST5,
-                     KeyExchangeAlgorithm.DIFFIE_HELLMAN, true,
-                     SignatureAlgorithm.RSA,
-                     MacAlgorithm.SHA, 16, 0x00, 0x75,
-                     "TLS_DHE_RSA_WITH_CAST_128_CBC_SHA");
-  public static final class  TLS_DHE_RSA_WITH_CAST_128_CBC_RMD  extends CipherSuite {
-    super (CipherAlgorithm.CAST5,
-                     KeyExchangeAlgorithm.DIFFIE_HELLMAN, true,
-                     SignatureAlgorithm.RSA,
-                     MacAlgorithm.HMAC_RMD, 16, 0x00, 0x76,
-                     "TLS_DHE_RSA_WITH_CAST_128_CBC_RMD");
-  public static final class  TLS_DHE_RSA_WITH_3DES_EDE_CBC_RMD  extends CipherSuite {
-    super (CipherAlgorithm.DESede,
-                     KeyExchangeAlgorithm.DIFFIE_HELLMAN, true,
-                     SignatureAlgorithm.RSA,
-                     MacAlgorithm.HMAC_RMD, 24, 0x00, 0x77,
-                     "TLS_DHE_RSA_WITH_3DES_EDE_CBC_RMD");
-  public static final class  TLS_DHE_RSA_WITH_AES_128_CBC_RMD  extends CipherSuite {
-    super (CipherAlgorithm.AES,
-                     KeyExchangeAlgorithm.DIFFIE_HELLMAN, true,
-                     SignatureAlgorithm.RSA,
-                     MacAlgorithm.HMAC_RMD, 16, 0x00, 0x78,
-                     "TLS_DHE_RSA_WITH_AES_128_CBC_RMD");
-  public static final class  TLS_DHE_RSA_WITH_AES_256_CBC_RMD  extends CipherSuite {
-    super (CipherAlgorithm.AES,
-                     KeyExchangeAlgorithm.DIFFIE_HELLMAN, true,
-                     SignatureAlgorithm.RSA,
-                     MacAlgorithm.HMAC_RMD, 32, 0x00, 0x79,
-                     "TLS_DHE_RSA_WITH_AES_256_CBC_RMD");
-  public static final class  TLS_RSA_WITH_CAST_128_CBC_SHA  extends CipherSuite {
-    super (CipherAlgorithm.CAST5,
-                     KeyExchangeAlgorithm.RSA,
-                     SignatureAlgorithm.RSA,
-                     MacAlgorithm.SHA, 16, 0x00, 0x7A,
-                     "TLS_RSA_WITH_CAST_128_CBC_SHA");
-  public static final class  TLS_RSA_WITH_CAST_128_CBC_RMD  extends CipherSuite {
-    super (CipherAlgorithm.CAST5,
-                     KeyExchangeAlgorithm.RSA,
-                     SignatureAlgorithm.RSA,
-                     MacAlgorithm.HMAC_RMD, 16, 0x00, 0x7B,
-                     "TLS_RSA_WITH_CAST_128_CBC_RMD");
-  public static final class  TLS_RSA_WITH_3DES_EDE_CBC_RMD  extends CipherSuite {
-    super (CipherAlgorithm.DESede,
-                     KeyExchangeAlgorithm.RSA,
-                     SignatureAlgorithm.RSA,
-                     MacAlgorithm.HMAC_RMD, 24, 0x00, 0x7C,
-                     "TLS_RSA_WITH_3DES_EDE_CBC_RMD");
-  public static final class  TLS_RSA_WITH_AES_128_CBC_RMD  extends CipherSuite {
-    super (CipherAlgorithm.AES,
-                     KeyExchangeAlgorithm.RSA,
-                     SignatureAlgorithm.RSA,
-                     MacAlgorithm.HMAC_RMD, 16, 0x00, 0x7D,
-                     "TLS_RSA_WITH_AES_128_CBC_RMD");
-  public static final class  TLS_RSA_WITH_AES_256_CBC_RMD  extends CipherSuite {
-    super (CipherAlgorithm.AES,
-                     KeyExchangeAlgorithm.RSA,
-                     SignatureAlgorithm.RSA,
-                     MacAlgorithm.HMAC_RMD, 32, 0x00, 0x7E,
-                     "TLS_RSA_WITH_AES_256_CBC_RMD"); */
 
     private final CipherAlgorithm cipherAlgorithm;
     private final KeyExchangeAlgorithm keyExchangeAlgorithm;
@@ -749,19 +620,40 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
             case AES:
                 return Cipher.getInstance("AES/CBC/NoPadding");
             case DES:
-                return Cipher.getInstance("DES/CBC/NoPadding");
+                throw new NoSuchAlgorithmException("DES cipher suites are disabled");
             case DESede:
-                return Cipher.getInstance("DESEDE/CBC/NoPadding");
+                throw new NoSuchAlgorithmException("DESede cipher suites are disabled");
             case RC4:
-                return Cipher.getInstance("RC4");
+                throw new NoSuchAlgorithmException("RC4 cipher suites are disabled");
             case CAST5:
-                return Cipher.getInstance("CAST5");
+                return Cipher.getInstance("CAST5"); // Note, not actually used anymore.
         }
         throw new NoSuchAlgorithmException("unknown cipher algorithm");
     }
 
     @Override
+    public KeyGenerator prf(SSLProtocolVersion version) throws NoSuchAlgorithmException
+    {
+        switch (version)
+        {
+            case TLSv1_2: return KeyGenerator.getInstance("P_SHA256");
+            default: return KeyGenerator.getInstance("TLS_PRF");
+        }
+    }
+
+    @Override
     public Signature signature() throws NoSuchAlgorithmException {
+        switch (signatureAlgorithm)
+        {
+            case ANONYMOUS:
+                return null;
+
+            case DSA:
+                return Signature.getInstance("DSA");
+
+            case RSA:
+                return Signature.getInstance("RSA");
+        }
         return null;
     }
 

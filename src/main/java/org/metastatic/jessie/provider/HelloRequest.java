@@ -38,35 +38,33 @@ exception statement from your version.  */
 
 package org.metastatic.jessie.provider;
 
-import gnu.java.lang.CPStringBuilder;
-
 /**
  * The handshake body for a HelloRequest handshake message.
- *
+ * <p/>
  * <pre>struct { } HelloRequest;</pre>
  */
 public final class HelloRequest implements Handshake.Body
 {
-  public HelloRequest ()
-  {
-  }
+    public HelloRequest()
+    {
+    }
 
-  public String toString (final String prefix)
-  {
-    CPStringBuilder str = new CPStringBuilder ();
-    if (prefix != null)
-      str.append (prefix);
-    str.append ("HelloRequest { };");
-    return str.toString ();
-  }
+    public String toString(final String prefix)
+    {
+        StringBuilder str = new StringBuilder();
+        if (prefix != null)
+            str.append(prefix);
+        str.append("HelloRequest { };");
+        return str.toString();
+    }
 
-  public int length ()
-  {
-    return 0;
-  }
+    public int length()
+    {
+        return 0;
+    }
 
-  public String toString ()
-  {
-    return toString (null);
-  }
+    public String toString()
+    {
+        return toString(null);
+    }
 }

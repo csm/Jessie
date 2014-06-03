@@ -1,20 +1,20 @@
-/* UnresolvedExtensionValue.jav --
-   Copyright (C) 2006  Free Software Foundation, Inc.
+/* 
+   Copyright (C) 2014  Casey Marshall
 
-This file is a part of GNU Classpath.
+This file is a part of Jessie.
 
-GNU Classpath is free software; you can redistribute it and/or modify
+Jessie is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or (at
 your option) any later version.
 
-GNU Classpath is distributed in the hope that it will be useful, but
+Jessie is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Classpath; if not, write to the Free Software
+along with Jessie; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 USA
 
@@ -35,47 +35,48 @@ this exception to your version of the library, but you are not
 obligated to do so.  If you do not wish to do so, delete this
 exception statement from your version.  */
 
-
 package org.metastatic.jessie.provider;
 
-import org.metastatic.jessie.provider.Extension.Value;
+import java.security.cert.*;
+import java.security.cert.Certificate;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
-import java.nio.ByteBuffer;
-
-public class UnresolvedExtensionValue extends Value
+public class BasicCertPath extends CertPath
 {
-    private final ByteBuffer buffer;
+    private final List<X509Certificate> certs;
 
-    public UnresolvedExtensionValue(final ByteBuffer buffer)
+    public BasicCertPath(X509Certificate... certs)
     {
-        this.buffer = buffer;
+        super("X.509");
+        this.certs = new ArrayList<>(certs.length);
+        for (X509Certificate cert : certs)
+            this.certs.add(cert);
     }
 
-    public int length()
+    @Override
+    public Iterator<String> getEncodings()
     {
-        return buffer.limit();
+        return Collections.emptyIterator();
     }
 
-    public ByteBuffer buffer()
+    @Override
+    public byte[] getEncoded() throws CertificateEncodingException
     {
-        return value();
+        return new byte[0];
     }
 
-    public ByteBuffer value()
+    @Override
+    public byte[] getEncoded(String encoding) throws CertificateEncodingException
     {
-        return buffer.slice();
+        return new byte[0];
     }
 
-    public String toString()
+    @Override
+    public List<? extends Certificate> getCertificates()
     {
-        return toString(null);
-    }
-
-    public String toString(final String prefix)
-    {
-        String s = Util.hexDump(buffer);
-        if (prefix != null)
-            s = prefix + s;
-        return s;
+        return Collections.unmodifiableList(certs);
     }
 }

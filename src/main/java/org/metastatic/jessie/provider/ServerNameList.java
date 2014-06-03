@@ -38,7 +38,7 @@ exception statement from your version.  */
 
 package org.metastatic.jessie.provider;
 
-import gnu.javax.net.ssl.provider.Extension.Value;
+import org.metastatic.jessie.provider.Extension.Value;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;

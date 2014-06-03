@@ -1,20 +1,20 @@
-/* UnresolvedExtensionValue.jav --
-   Copyright (C) 2006  Free Software Foundation, Inc.
+/* 
+   Copyright (C) 2014  Casey Marshall
 
-This file is a part of GNU Classpath.
+This file is a part of Jessie.
 
-GNU Classpath is free software; you can redistribute it and/or modify
+Jessie is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or (at
 your option) any later version.
 
-GNU Classpath is distributed in the hope that it will be useful, but
+Jessie is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Classpath; if not, write to the Free Software
+along with Jessie; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 USA
 
@@ -35,47 +35,50 @@ this exception to your version of the library, but you are not
 obligated to do so.  If you do not wish to do so, delete this
 exception statement from your version.  */
 
-
 package org.metastatic.jessie.provider;
 
-import org.metastatic.jessie.provider.Extension.Value;
+import javax.crypto.interfaces.DHPrivateKey;
+import javax.crypto.spec.DHParameterSpec;
+import java.math.BigInteger;
 
-import java.nio.ByteBuffer;
-
-public class UnresolvedExtensionValue extends Value
+public class DHPrivateKeyImpl implements DHPrivateKey
 {
-    private final ByteBuffer buffer;
+    private final BigInteger x;
+    private final DHParameterSpec params;
 
-    public UnresolvedExtensionValue(final ByteBuffer buffer)
+    public DHPrivateKeyImpl(BigInteger x, DHParameterSpec params)
     {
-        this.buffer = buffer;
+        this.x = x;
+        this.params = params;
     }
 
-    public int length()
+    @Override
+    public BigInteger getX()
     {
-        return buffer.limit();
+        return x;
     }
 
-    public ByteBuffer buffer()
+    @Override
+    public DHParameterSpec getParams()
     {
-        return value();
+        return params;
     }
 
-    public ByteBuffer value()
+    @Override
+    public String getAlgorithm()
     {
-        return buffer.slice();
+        return "DH";
     }
 
-    public String toString()
+    @Override
+    public String getFormat()
     {
-        return toString(null);
+        return null;
     }
 
-    public String toString(final String prefix)
+    @Override
+    public byte[] getEncoded()
     {
-        String s = Util.hexDump(buffer);
-        if (prefix != null)
-            s = prefix + s;
-        return s;
+        return new byte[0];
     }
 }

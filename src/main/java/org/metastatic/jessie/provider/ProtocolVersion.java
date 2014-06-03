@@ -38,11 +38,14 @@ exception statement from your version.  */
 
 package org.metastatic.jessie.provider;
 
+import org.metastatic.jessie.SSLProtocolVersion;
+
 import java.io.InputStream;
 import java.io.IOException;
 
 public final class ProtocolVersion
-        implements Comparable<ProtocolVersion>, Constructed {
+       implements Comparable<ProtocolVersion>, Constructed
+{
 
     // Constants and fields.
     // -------------------------------------------------------------------------
@@ -94,6 +97,17 @@ public final class ProtocolVersion
             }
         }
         return new ProtocolVersion(major, minor);
+    }
+
+    public static ProtocolVersion forVersion(SSLProtocolVersion version)
+    {
+        switch (version)
+        {
+            case SSLv3: return SSL_3;
+            case TLSv1: return TLS_1;
+            case TLSv1_1: return TLS_1_1;
+            default: return TLS_1_2;
+        }
     }
 
     public static ProtocolVersion getInstance(final short raw_value) {
@@ -152,6 +166,14 @@ public final class ProtocolVersion
             return -1;
         }
         return 0;
+    }
+
+    public SSLProtocolVersion protocolVersion()
+    {
+        if (this == SSL_3) return SSLProtocolVersion.SSLv3;
+        if (this == TLS_1) return SSLProtocolVersion.TLSv1;
+        if (this == TLS_1_1) return SSLProtocolVersion.TLSv1_1;
+        return SSLProtocolVersion.TLSv1_2;
     }
 
     public String toString(String prefix) {

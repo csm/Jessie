@@ -140,24 +140,6 @@ public abstract class AbstractHandshake
             = new byte[]{0x53, 0x52, 0x56, 0x52};
 
     /**
-     * SSL 3.0; the value 0x36 40 (for SHA-1 hashes) or 48 (for MD5 hashes)
-     * times.
-     */
-    protected static final byte[] PAD1 = new byte[48];
-
-    /**
-     * SSL 3.0; the value 0x5c 40 (for SHA-1 hashes) or 48 (for MD5 hashes)
-     * times.
-     */
-    protected static final byte[] PAD2 = new byte[48];
-
-    static
-    {
-        Arrays.fill(PAD1, SSLHMac.PAD1);
-        Arrays.fill(PAD2, SSLHMac.PAD2);
-    }
-
-    /**
      * The currently-read handshake messages. There may be zero, or
      * multiple, handshake messages in this buffer.
      */
@@ -171,6 +153,7 @@ public abstract class AbstractHandshake
 
     protected MessageDigest sha;
     protected MessageDigest md5;
+    protected MessageDigest sha256;
 
     protected final SSLEngineImpl engine;
     protected KeyAgreement keyAgreement;
@@ -188,6 +171,7 @@ public abstract class AbstractHandshake
         this.engine = engine;
         sha = MessageDigest.getInstance("SHA-1");
         md5 = MessageDigest.getInstance("MD5");
+        sha256 = MessageDigest.getInstance("SHA256");
         tasks = new LinkedList<>();
     }
 
@@ -476,59 +460,6 @@ public abstract class AbstractHandshake
     }
 
     /**
-     * Generate a certificate verify message for SSLv3. In SSLv3, a different
-     * algorithm was used to generate this value was subtly different than
-     * that used in TLSv1.0 and later. In TLSv1.0 and later, this value is
-     * just the digest over the handshake messages.
-     * <p/>
-     * <p>SSLv3 uses the algorithm:
-     * <p/>
-     * <pre>
-     * CertificateVerify.signature.md5_hash
-     * MD5(master_secret + pad_2 +
-     * MD5(handshake_messages + master_secret + pad_1));
-     * Certificate.signature.sha_hash
-     * SHA(master_secret + pad_2 +
-     * SHA(handshake_messages + master_secret + pad_1));</pre>
-     *
-     * @param md5     The running MD5 hash of the handshake.
-     * @param sha     The running SHA-1 hash of the handshake.
-     * @param session The current session being negotiated.
-     * @return The computed to-be-signed value.
-     */
-    protected byte[] genV3CertificateVerify(MessageDigest md5,
-                                            MessageDigest sha,
-                                            SessionImpl session)
-    {
-        byte[] md5value = null;
-        if (session.suite.signatureAlgorithm() == SignatureAlgorithm.RSA)
-        {
-            md5.update(session.privateData.masterSecret);
-            md5.update(PAD1, 0, 48);
-            byte[] tmp = md5.digest();
-            md5.reset();
-            md5.update(session.privateData.masterSecret);
-            md5.update(PAD2, 0, 48);
-            md5.update(tmp);
-            md5value = md5.digest();
-        }
-
-        sha.update(session.privateData.masterSecret);
-        sha.update(PAD1, 0, 40);
-        byte[] tmp = sha.digest();
-        sha.reset();
-        sha.update(session.privateData.masterSecret);
-        sha.update(PAD2, 0, 40);
-        sha.update(tmp);
-        byte[] shavalue = sha.digest();
-
-        if (md5value != null)
-            return Util.concat(md5value, shavalue);
-
-        return shavalue;
-    }
-
-    /**
      * Generate the session keys from the computed master secret.
      *
      * @param clientRandom The client's nonce.
@@ -566,12 +497,7 @@ public abstract class AbstractHandshake
         }
         int keylen = session.suite.keyLength();
 
-        KeyGenerator prf;
-        if (session.version == ProtocolVersion.TLS_1_2)
-            prf = KeyGenerator.getInstance("P_SHA256");
-        else
-            prf = KeyGenerator.getInstance("TLS_PRF");
-
+        KeyGenerator prf = session.suite.prf(session.version.protocolVersion());
         byte[] seed = new byte[KEY_EXPANSION.length
                 + clientRandom.length()
                 + serverRandom.length()];

@@ -49,15 +49,7 @@ import org.metastatic.jessie.provider.ServerNameList.NameType;
 import org.metastatic.jessie.provider.ServerNameList.ServerName;
 
 import java.nio.ByteBuffer;
-import java.security.AccessController;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.SignatureException;
+import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
@@ -305,10 +297,7 @@ public class ClientHandshake extends AbstractHandshake {
 
                 if (kexalg == DHE_DSS || kexalg == DHE_RSA || kexalg == DH_anon) {
                     ServerDHParams dhParams = (ServerDHParams) skex.params();
-                    DHPublicKey serverKey = new GnuDHPublicKey(null,
-                            dhParams.p(),
-                            dhParams.g(),
-                            dhParams.y());
+                    DHPublicKey serverKey = new DHPublicKeyImpl(dhParams.y(), new DHParameterSpec(dhParams.p(), dhParams.g()));
                     DHParameterSpec params = new DHParameterSpec(dhParams.p(),
                             dhParams.g());
                     keyExchange = new ClientDHGen(serverKey, params, true);
@@ -318,10 +307,7 @@ public class ClientHandshake extends AbstractHandshake {
                     ServerDHE_PSKParameters pskParams = (ServerDHE_PSKParameters)
                             skex.params();
                     ServerDHParams dhParams = pskParams.params();
-                    DHPublicKey serverKey = new GnuDHPublicKey(null,
-                            dhParams.p(),
-                            dhParams.g(),
-                            dhParams.y());
+                    DHPublicKey serverKey = new DHPublicKeyImpl(dhParams.y(), new DHParameterSpec(dhParams.p(), dhParams.g()));
                     DHParameterSpec params = new DHParameterSpec(dhParams.p(),
                             dhParams.g());
                     keyExchange = new ClientDHGen(serverKey, params, false);
@@ -357,7 +343,7 @@ public class ClientHandshake extends AbstractHandshake {
             // Server Hello Done.
             case READ_SERVER_HELLO_DONE: {
                 if (handshake.type() != Handshake.Type.SERVER_HELLO_DONE)
-                    throw new AlertException(new Alert(Level.FATAL,
+                    throw new AlertException(new Alert(Alert.Level.FATAL,
                             Description.UNEXPECTED_MESSAGE));
                 state = WRITE_CERTIFICATE;
             }
@@ -366,51 +352,72 @@ public class ClientHandshake extends AbstractHandshake {
             // Finished.
             case READ_FINISHED: {
                 if (handshake.type() != Handshake.Type.FINISHED)
-                    throw new AlertException(new Alert(Level.FATAL,
+                    throw new AlertException(new Alert(Alert.Level.FATAL,
                             Description.UNEXPECTED_MESSAGE));
 
                 Finished serverFinished = (Finished) handshake.body();
-                MessageDigest md5copy = null;
-                MessageDigest shacopy = null;
-                try {
-                    md5copy = (MessageDigest) md5.clone();
-                    shacopy = (MessageDigest) sha.clone();
-                } catch (CloneNotSupportedException cnse) {
-                    // We're improperly configured to use a non-cloneable
-                    // md5/sha-1, OR there's a runtime bug.
-                    throw new SSLException(cnse);
+                MessageDigest[] digests;
+                if (engine.session().version == ProtocolVersion.TLS_1_2)
+                {
+                    MessageDigest sha256copy = null;
+                    try
+                    {
+                        sha256copy = (MessageDigest) sha256.clone();
+                        digests = new MessageDigest[] { sha256copy };
+                    }
+                    catch (CloneNotSupportedException e)
+                    {
+                        throw new SSLException(e);
+                    }
+                }
+                else
+                {
+                    MessageDigest md5copy = null;
+                    MessageDigest shacopy = null;
+                    try
+                    {
+                        md5copy = (MessageDigest) md5.clone();
+                        shacopy = (MessageDigest) sha.clone();
+                        digests = new MessageDigest[] { md5copy, shacopy };
+                    } catch (CloneNotSupportedException cnse)
+                    {
+                        // We're improperly configured to use a non-cloneable
+                        // md5/sha-1, OR there's a runtime bug.
+                        throw new SSLException(cnse);
+                    }
                 }
                 Finished clientFinished =
-                        new Finished(generateFinished(md5copy, shacopy,
-                                false, engine.session()),
-                                engine.session().version
-                        );
-
-                if (Debug.DEBUG)
-                    logger.logv(Component.SSL_HANDSHAKE, "clientFinished: {0}",
-                            clientFinished);
-
-                if (engine.session().version == ProtocolVersion.SSL_3) {
-                    if (!Arrays.equals(clientFinished.md5Hash(),
-                            serverFinished.md5Hash())
-                            || !Arrays.equals(clientFinished.shaHash(),
-                            serverFinished.shaHash())) {
-                        engine.session().invalidate();
-                        throw new SSLException("session verify failed");
-                    }
-                } else {
-                    if (!Arrays.equals(clientFinished.verifyData(),
-                            serverFinished.verifyData())) {
-                        engine.session().invalidate();
-                        throw new SSLException("session verify failed");
-                    }
+                        null;
+                try
+                {
+                    clientFinished = new Finished(generateFinished(digests,
+                            false, engine.session()),
+                            engine.session().version
+                    );
+                }
+                catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException e)
+                {
+                    throw new SSLException(e);
                 }
 
-                if (continuedSession) {
+                if (Debug.DEBUG)
+                    logger.log(Level.FINE, "clientFinished: {0}", clientFinished);
+
+                if (!MessageDigest.isEqual(clientFinished.verifyData(), serverFinished.verifyData()))
+                {
+                    engine.session().invalidate();
+                    throw new SSLException("session verify failed");
+                }
+
+                if (continuedSession)
+                {
                     engine.changeCipherSpec();
                     state = WRITE_FINISHED;
-                } else
+                }
+                else
+                {
                     state = DONE;
+                }
             }
             break;
 
@@ -438,17 +445,19 @@ public class ClientHandshake extends AbstractHandshake {
     protected HandshakeStatus implHandleOutput(ByteBuffer fragment)
             throws SSLException {
         if (Debug.DEBUG)
-            logger.logv(Component.SSL_HANDSHAKE, "output to {0}; state:{1}; outBuffer:{2}",
-                    fragment, state, outBuffer);
+            logger.log(Level.FINE, "output to {0}; state:{1}; outBuffer:{2}",
+                       new Object[] { fragment, state, outBuffer });
 
         // Drain the output buffer, if it needs it.
-        if (outBuffer != null && outBuffer.hasRemaining()) {
+        if (outBuffer != null && outBuffer.hasRemaining())
+        {
             int l = Math.min(fragment.remaining(), outBuffer.remaining());
             fragment.put((ByteBuffer) outBuffer.duplicate().limit(outBuffer.position() + l));
             outBuffer.position(outBuffer.position() + l);
         }
 
-        if (!fragment.hasRemaining()) {
+        if (!fragment.hasRemaining())
+        {
             if (state.isWriteState() || outBuffer.hasRemaining())
                 return HandshakeStatus.NEED_WRAP;
             else
@@ -458,7 +467,7 @@ public class ClientHandshake extends AbstractHandshake {
         outer_loop:
         while (fragment.remaining() >= 4 && state.isWriteState()) {
             if (Debug.DEBUG)
-                logger.logv(Component.SSL_HANDSHAKE, "loop state={0}", state);
+                logger.log(Level.FINE, "loop state={0}", state);
 
             switch (state) {
                 case WRITE_CLIENT_HELLO: {
@@ -516,7 +525,7 @@ public class ClientHandshake extends AbstractHandshake {
                         hello.setDisableExtensions(true);
 
                     if (Debug.DEBUG)
-                        logger.logv(Component.SSL_HANDSHAKE, "{0}", hello);
+                        logger.log(Level.FINE, "{0}", hello);
 
                     fragment.putInt((Handshake.Type.CLIENT_HELLO.getValue() << 24)
                             | (hello.length() & 0xFFFFFF));
@@ -539,7 +548,7 @@ public class ClientHandshake extends AbstractHandshake {
                         try {
                             cert.setCertificates(Arrays.asList(chain));
                         } catch (CertificateException ce) {
-                            throw new AlertException(new Alert(Level.FATAL,
+                            throw new AlertException(new Alert(Alert.Level.FATAL,
                                     Description.INTERNAL_ERROR),
                                     ce
                             );
@@ -576,7 +585,7 @@ public class ClientHandshake extends AbstractHandshake {
                         assert (keyExchange instanceof RSAGen);
                         assert (keyExchange.hasRun());
                         if (keyExchange.thrown() != null)
-                            throw new AlertException(new Alert(Level.FATAL,
+                            throw new AlertException(new Alert(Alert.Level.FATAL,
                                     Description.HANDSHAKE_FAILURE),
                                     keyExchange.thrown()
                             );
@@ -584,8 +593,11 @@ public class ClientHandshake extends AbstractHandshake {
                                 = new EncryptedPreMasterSecret(((RSAGen) keyExchange).encryptedSecret(),
                                 engine.session().version);
                         if (kea == RSA)
+                        {
                             ckex.setExchangeKeys(epms.buffer());
-                        else {
+                        }
+                        else
+                        {
                             String identity = getPSKIdentity();
                             if (identity == null)
                                 throw new SSLException("no pre-shared-key identity;"
@@ -594,10 +606,18 @@ public class ClientHandshake extends AbstractHandshake {
                             ClientRSA_PSKParameters params =
                                     new ClientRSA_PSKParameters(identity, epms.buffer());
                             ckex.setExchangeKeys(params.buffer());
-                            generatePSKSecret(identity, preMasterSecret, true);
+                            try
+                            {
+                                generatePSKSecret(identity, preMasterSecret, true);
+                            }
+                            catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException e)
+                            {
+                                throw new SSLException(e);
+                            }
                         }
                     }
-                    if (kea == DHE_PSK) {
+                    if (kea == DHE_PSK)
+                    {
                         assert (keyExchange instanceof ClientDHGen);
                         assert (dhPair != null);
                         String identity = getPSKIdentity();
@@ -610,19 +630,35 @@ public class ClientHandshake extends AbstractHandshake {
                                 new ClientDHE_PSKParameters(identity,
                                         new ClientDiffieHellmanPublic(pubkey.getY()));
                         ckex.setExchangeKeys(params.buffer());
-                        generatePSKSecret(identity, preMasterSecret, true);
+                        try
+                        {
+                            generatePSKSecret(identity, preMasterSecret, true);
+                        }
+                        catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException e)
+                        {
+                            throw new SSLException(e);
+                        }
                     }
-                    if (kea == PSK) {
+                    if (kea == PSK)
+                    {
                         String identity = getPSKIdentity();
                         if (identity == null)
                             throw new SSLException("no pre-shared key identity; set"
                                     + " the security property"
                                     + " \"jessie.client.psk.identity\"");
-                        generatePSKSecret(identity, null, true);
+                        try
+                        {
+                            generatePSKSecret(identity, null, true);
+                        }
+                        catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException e)
+                        {
+                            throw new SSLException(e);
+                        }
                         ClientPSKParameters params = new ClientPSKParameters(identity);
                         ckex.setExchangeKeys(params.buffer());
                     }
-                    if (kea == NONE) {
+                    if (kea == NONE)
+                    {
                         Inflater inflater = null;
                         Deflater deflater = null;
                         if (compression == CompressionMethod.ZLIB) {
@@ -639,11 +675,11 @@ public class ClientHandshake extends AbstractHandshake {
                     }
 
                     if (Debug.DEBUG)
-                        logger.logv(Component.SSL_HANDSHAKE, "{0}", ckex);
+                        logger.log(Level.FINE, "{0}", ckex);
 
                     outBuffer = ckex.buffer();
                     if (Debug.DEBUG)
-                        logger.logv(Component.SSL_HANDSHAKE, "client kex buffer {0}", outBuffer);
+                        logger.log(Level.FINE, "client kex buffer {0}", outBuffer);
                     fragment.putInt((Handshake.Type.CLIENT_KEY_EXCHANGE.getValue() << 24)
                             | (ckex.length() & 0xFFFFFF));
                     int l = Math.min(fragment.remaining(), outBuffer.remaining());
@@ -684,19 +720,45 @@ public class ClientHandshake extends AbstractHandshake {
                 break outer_loop;
 
                 case WRITE_FINISHED: {
-                    MessageDigest md5copy = null;
-                    MessageDigest shacopy = null;
-                    try {
-                        md5copy = (MessageDigest) md5.clone();
-                        shacopy = (MessageDigest) sha.clone();
-                    } catch (CloneNotSupportedException cnse) {
-                        // We're improperly configured to use a non-cloneable
-                        // md5/sha-1, OR there's a runtime bug.
-                        throw new SSLException(cnse);
+                    MessageDigest[] digests;
+                    if (engine.session().version == ProtocolVersion.TLS_1_2)
+                    {
+                        MessageDigest sha256copy = null;
+                        try
+                        {
+                            sha256copy = (MessageDigest) sha256.clone();
+                            digests = new MessageDigest[] { sha256copy };
+                        }
+                        catch (CloneNotSupportedException e)
+                        {
+                            throw new SSLException(e);
+                        }
                     }
-                    outBuffer
-                            = generateFinished(md5copy, shacopy, true,
-                            engine.session());
+                    else
+                    {
+                        MessageDigest md5copy = null;
+                        MessageDigest shacopy = null;
+                        try
+                        {
+                            md5copy = (MessageDigest) md5.clone();
+                            shacopy = (MessageDigest) sha.clone();
+                            digests = new MessageDigest[] { md5copy, shacopy };
+                        }
+                        catch (CloneNotSupportedException cnse)
+                        {
+                            // We're improperly configured to use a non-cloneable
+                            // md5/sha-1, OR there's a runtime bug.
+                            throw new SSLException(cnse);
+                        }
+                    }
+                    try
+                    {
+                        outBuffer = generateFinished(digests, true, engine.session());
+                    }
+                    catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException e)
+                    {
+                        throw new SSLException(e);
+                    }
 
                     fragment.putInt((Handshake.Type.FINISHED.getValue() << 24)
                             | outBuffer.remaining() & 0xFFFFFF);
@@ -784,25 +846,22 @@ public class ClientHandshake extends AbstractHandshake {
         return suites;
     }
 
-    private List<CompressionMethod> getCompressionMethods() {
+    private List<CompressionMethod> getCompressionMethods()
+    {
         List<CompressionMethod> methods = new LinkedList<CompressionMethod>();
-        GetSecurityPropertyAction gspa = new GetSecurityPropertyAction("jessie.enable.compression");
-        if (Boolean.valueOf(AccessController.doPrivileged(gspa)))
+        if (Boolean.valueOf(AccessController.doPrivileged((PrivilegedAction<String>) () -> Security.getProperty("org.metastatic.jessie.enable.compression"))))
             methods.add(CompressionMethod.ZLIB);
         methods.add(CompressionMethod.NULL);
         return methods;
     }
 
-    private boolean enableExtensions() {
-        GetSecurityPropertyAction action
-                = new GetSecurityPropertyAction("jessie.client.enable.extensions");
-        return Boolean.valueOf(AccessController.doPrivileged(action));
+    private boolean enableExtensions()
+    {
+        return Boolean.valueOf(AccessController.doPrivileged((PrivilegedAction<String>) () -> Security.getProperty("org.metastatic.jessie.enable.extensions")));
     }
 
     private MaxFragmentLength maxFragmentLength() {
-        GetSecurityPropertyAction action
-                = new GetSecurityPropertyAction("jessie.client.maxFragmentLength");
-        String s = AccessController.doPrivileged(action);
+        String s = AccessController.doPrivileged((PrivilegedAction<String>) () -> Security.getProperty("org.metastatic.jessie.client.maxFragmentLength"));
         if (s != null) {
             try {
                 int len = Integer.parseInt(s);
@@ -827,15 +886,11 @@ public class ClientHandshake extends AbstractHandshake {
     }
 
     private boolean truncatedHMac() {
-        GetSecurityPropertyAction action
-                = new GetSecurityPropertyAction("jessie.client.truncatedHMac");
-        return Boolean.valueOf(AccessController.doPrivileged(action));
+        return Boolean.valueOf(AccessController.doPrivileged((PrivilegedAction<String>) () -> Security.getProperty("org.metastatic.jessie.client.truncatedHMac")));
     }
 
     private String getPSKIdentity() {
-        GetSecurityPropertyAction action
-                = new GetSecurityPropertyAction("jessie.client.psk.identity");
-        return AccessController.doPrivileged(action);
+        return AccessController.doPrivileged((PrivilegedAction<String>) () -> Security.getProperty("org.metastatic.jessie.client.psk.identity"));
     }
 
     // Delegated tasks.
@@ -901,7 +956,7 @@ public class ClientHandshake extends AbstractHandshake {
             if (Debug.DEBUG_KEY_EXCHANGE)
                 logger.log(Level.FINE,
                         "client keys public:{0} private:{1}",
-                        new Object[] { dhPair.getPublic(), dhPair.getPrivate() });
+                        new Object[]{dhPair.getPublic(), dhPair.getPrivate()});
 
             initDiffieHellman((DHPrivateKey) dhPair.getPrivate(), engine.session().random());
 
@@ -981,9 +1036,16 @@ public class ClientHandshake extends AbstractHandshake {
 
             // Generate our session keys, because we can.
             if (full) {
-                generateMasterSecret(clientRandom, serverRandom, engine.session());
-                byte[][] keys = generateKeys(clientRandom, serverRandom, engine.session());
-                setupSecurityParameters(keys, true, engine, compression);
+                try
+                {
+                    generateMasterSecret(clientRandom, serverRandom, engine.session());
+                    TLSSessionKeys keys = generateKeys(clientRandom, serverRandom, engine.session());
+                    setupSecurityParameters(keys, true, engine, compression);
+                }
+                catch (InvalidAlgorithmParameterException e)
+                {
+                    throw new SSLException(e);
+                }
             }
         }
 
@@ -1009,14 +1071,11 @@ public class ClientHandshake extends AbstractHandshake {
         public void implRun()
                 throws InvalidKeyException, NoSuchAlgorithmException, SignatureException {
             byte[] toSign;
-            if (engine.session().version == ProtocolVersion.SSL_3) {
-                toSign = genV3CertificateVerify(md5, sha, engine.session());
-            } else {
-                if (engine.session().suite.signatureAlgorithm() == SignatureAlgorithm.RSA)
-                    toSign = Util.concat(md5.digest(), sha.digest());
-                else
-                    toSign = sha.digest();
-            }
+            // TODO fix this for TLS1.2
+            if (engine.session().suite.signatureAlgorithm() == SignatureAlgorithm.RSA)
+                toSign = Util.concat(md5.digest(), sha.digest());
+            else
+                toSign = sha.digest();
 
             java.security.Signature sig =
                     java.security.Signature.getInstance(engine.session().suite.signatureAlgorithm().name());

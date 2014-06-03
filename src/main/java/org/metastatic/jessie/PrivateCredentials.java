@@ -69,6 +69,7 @@ import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
 import com.google.common.io.ByteStreams;
+import com.google.common.io.CharStreams;
 
 /**
  * An instance of a manager factory parameters for holding a single
@@ -79,8 +80,9 @@ public class PrivateCredentials implements ManagerFactoryParameters
     // Fields.
     // -------------------------------------------------------------------------
 
-    public static final byte[] BEGIN_DSA = "-----BEGIN DSA PRIVATE KEY".getBytes();
-    public static final byte[] BEGIN_RSA = "-----BEGIN RSA PRIVATE KEY".getBytes();
+    public static final String BEGIN_DSA = "-----BEGIN DSA PRIVATE KEY";
+    public static final String BEGIN_RSA = "-----BEGIN RSA PRIVATE KEY";
+    public static final String END = "-----END";
 
     private List<Entry> entries;
 
@@ -141,11 +143,25 @@ public class PrivateCredentials implements ManagerFactoryParameters
         Collection<? extends Certificate> certs = cf.generateCertificates(certChain);
         X509Certificate[] chain = certs.toArray(new X509Certificate[certs.size()]);
 
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        ByteStreams.copy(privateKey, bout);
-        byte[] pkData = bout.toByteArray();
-
         String alg = null;
+        List<String> pkLines = CharStreams.readLines(new InputStreamReader(privateKey));
+        Iterator<String> lines = pkLines.iterator();
+        StringBuilder base64blob = new StringBuilder();
+        while (lines.hasNext())
+        {
+            String line = lines.next();
+            if (line.startsWith(BEGIN_DSA))
+                alg = "DSA";
+            else if (line.startsWith(BEGIN_RSA))
+                alg = "RSA";
+            else if (line.trim().isEmpty())
+                continue;
+            else if (line.startsWith("Proc-Type: 4,ENCRYPTED"))
+                continue;
+            else if (line.startsWith("DEK-Info: AES-"))
+            else if (line.startsWith(END))
+                break;
+        }
         outer:for (int i = 0; i < pkData.length - BEGIN_DSA.length; i++)
         {
             boolean isRsa = true;
