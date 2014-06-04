@@ -43,6 +43,8 @@ import java.io.StringWriter;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+import com.google.common.base.Preconditions;
+
 /**
  * A SSL/TLS record structure. An SSL record is defined to be:
  * <p/>
@@ -60,6 +62,9 @@ public class Record {
     private final ByteBuffer buffer;
 
     public Record(final ByteBuffer buffer) {
+        Preconditions.checkNotNull(buffer);
+        Preconditions.checkArgument(buffer.remaining() >= 5);
+        Preconditions.checkArgument(buffer.duplicate().order(ByteOrder.BIG_ENDIAN).getShort(3) == buffer.remaining() - 5);
         this.buffer = buffer.duplicate().order(ByteOrder.BIG_ENDIAN);
     }
 

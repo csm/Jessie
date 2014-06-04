@@ -82,6 +82,8 @@ public final class ProtocolVersion
             return TLS_1;
         if (name.equalsIgnoreCase("TLSv1.1"))
             return TLS_1_1;
+        if (name.equalsIgnoreCase("TLSv1.2"))
+            return TLS_1_2;
         throw new IllegalArgumentException("unknown protocol name: " + name);
     }
 
@@ -94,6 +96,8 @@ public final class ProtocolVersion
                     return TLS_1;
                 case 2:
                     return TLS_1_1;
+                case 3:
+                    return TLS_1_2;
             }
         }
         return new ProtocolVersion(major, minor);
