@@ -57,11 +57,35 @@ public class TLSKeyGenerators
         }
     }
 
+    public static class TLSKeyGeneratorSHA224 extends TLSKeyGeneratorImpl
+    {
+        public TLSKeyGeneratorSHA224() throws NoSuchAlgorithmException
+        {
+            super("HmacSHA224");
+        }
+    }
+
     public static class TLSKeyGeneratorSHA256 extends TLSKeyGeneratorImpl
     {
         public TLSKeyGeneratorSHA256() throws NoSuchAlgorithmException
         {
             super("HmacSHA256");
+        }
+    }
+
+    public static class TLSKeyGeneratorSHA384 extends TLSKeyGeneratorImpl
+    {
+        public TLSKeyGeneratorSHA384() throws NoSuchAlgorithmException
+        {
+            super("HmacSHA384");
+        }
+    }
+
+    public static class TLSKeyGeneratorSHA512 extends TLSKeyGeneratorImpl
+    {
+        public TLSKeyGeneratorSHA512() throws NoSuchAlgorithmException
+        {
+            super("HmacSHA512");
         }
     }
 }

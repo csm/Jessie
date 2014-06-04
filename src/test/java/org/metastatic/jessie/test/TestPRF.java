@@ -1,5 +1,5 @@
 /* 
-   Copyright (C) 2014  Casey Marshall
+   Copyright (C) 2014Casey Marshall
 
 This file is a part of Jessie.
 
@@ -80,6 +80,29 @@ public class TestPRF
     }
 
     @Test
+    public void testSHA224() throws Exception
+    {
+        // Test vector from http://www.ietf.org/mail-archive/web/tls/current/msg03416.html
+        byte[] secret = Util.toByteArray("e18828740352b530d69b34c6597dea2e");
+        byte[] seed = Util.toByteArray("f5a3fe6d34e2e28560fdcaf6823f9091");
+        byte[] label = "test label".getBytes();
+        byte[] output = Util.toByteArray("224d8af3c0453393a9779789d21cf7da5ee62ae6b617873d489428efc8dd58d1566e7029e2ca3a5ecd355dc64d4d927e2fbd78c4233e8604b14749a77a92a70fddf614bc0df623d798604e4ca5512794d802a258e82f86cf");
+
+        KeyGenerator gen = new TestableKeyGenerator(new TLSKeyGenerators.TLSKeyGeneratorSHA224(), jessie, "P_SHA224");
+        gen.init(new TLSKeyGeneratorParameterSpec("P_SHA224", Util.concat(label, seed), secret, 44, 0, 0));
+        SecretKey key = gen.generateKey();
+        System.out.println(Util.toHexString(key.getEncoded()));
+        assertArrayEquals(output, key.getEncoded());
+        TLSSessionKeys sessionKeys = (TLSSessionKeys) key;
+        sessionKeys.getClientWriteIV();
+        sessionKeys.getClientWriteKey();
+        sessionKeys.getClientWriteMACKey();
+        sessionKeys.getServerWriteIV();
+        sessionKeys.getServerWriteKey();
+        sessionKeys.getServerWriteMACKey();
+    }
+
+    @Test
     public void testSHA256() throws Exception
     {
         // Test vector from http://www.ietf.org/mail-archive/web/tls/current/msg03416.html
@@ -90,6 +113,29 @@ public class TestPRF
 
         KeyGenerator gen = new TestableKeyGenerator(new TLSKeyGenerators.TLSKeyGeneratorSHA256(), jessie, "P_SHA256");
         gen.init(new TLSKeyGeneratorParameterSpec("P_SHA256", Util.concat(label, seed), secret, 50, 0, 0));
+        SecretKey key = gen.generateKey();
+        System.out.println(Util.toHexString(key.getEncoded()));
+        assertArrayEquals(output, key.getEncoded());
+        TLSSessionKeys sessionKeys = (TLSSessionKeys) key;
+        sessionKeys.getClientWriteIV();
+        sessionKeys.getClientWriteKey();
+        sessionKeys.getClientWriteMACKey();
+        sessionKeys.getServerWriteIV();
+        sessionKeys.getServerWriteKey();
+        sessionKeys.getServerWriteMACKey();
+    }
+
+    @Test
+    public void testSHA512() throws Exception
+    {
+        // Test vector from http://www.ietf.org/mail-archive/web/tls/current/msg03416.html
+        byte[] secret = Util.toByteArray("b0323523c1853599584d88568bbb05eb");
+        byte[] seed = Util.toByteArray("d4640e12e4bcdbfb437f03e6ae418ee5");
+        byte[] label = "test label".getBytes();
+        byte[] output = Util.toByteArray("1261f588c798c5c201ff036e7a9cb5edcd7fe3f94c669a122a4638d7d508b283042df6789875c7147e906d868bc75c45e20eb40c1cf4a1713b27371f68432592f7dc8ea8ef223e12ea8507841311bf68653d0cfc4056d811f025c45ddfa6e6fec702f054b409d6f28dd0a3233e498da41a3e75c5630eedbe22fe254e33a1b0e9f6b9826675bec7d01a845658dc9c397545401d40b9f46c7a400ee1b8f81ca0a60d1a397a1028bff5d2ef5066126842fb8da4197632bdb54ff6633f86bbc836e640d4d898");
+
+        KeyGenerator gen = new TestableKeyGenerator(new TLSKeyGenerators.TLSKeyGeneratorSHA512(), jessie, "P_SHA512");
+        gen.init(new TLSKeyGeneratorParameterSpec("P_SHA512", Util.concat(label, seed), secret, 98, 0, 0));
         SecretKey key = gen.generateKey();
         System.out.println(Util.toHexString(key.getEncoded()));
         assertArrayEquals(output, key.getEncoded());
