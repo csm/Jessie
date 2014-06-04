@@ -40,50 +40,51 @@ package org.metastatic.jessie.provider;
 
 /**
  * The content type enumeration, which marks packets in the record layer.
- *
+ * <p/>
  * <pre>
-enum { change_cipher_spec(20), alert(21), handshake(22),
-       application_data(23), (255) } ContentType;</pre>
+ * enum { change_cipher_spec(20), alert(21), handshake(22),
+ * application_data(23), (255) } ContentType;</pre>
  *
  * <p>There is also a "pseudo" content type, <code>client_hello_v2
  * (1)</code>, which is used for backwards compatibility with SSLv2.
  *
  * @author Casey Marshall (rsdio@metastatic.org)
  */
-public enum ContentType
-{
+public enum ContentType {
 
-  CLIENT_HELLO_V2    ( 1),
-  CHANGE_CIPHER_SPEC (20),
-  ALERT              (21),
-  HANDSHAKE          (22),
-  APPLICATION_DATA   (23);
+    CLIENT_HELLO_V2(1),
+    CHANGE_CIPHER_SPEC(20),
+    ALERT(21),
+    HANDSHAKE(22),
+    APPLICATION_DATA(23);
 
-  private int value;
+    private int value;
 
-  // Constructors.
-  // ------------------------------------------------------------------------
+    // Constructors.
+    // ------------------------------------------------------------------------
 
-  private ContentType(int value)
-  {
-    this.value = value;
-  }
+    private ContentType(int value) {
+        this.value = value;
+    }
 
-  static final ContentType forInteger (final int value)
-  {
-    switch (value & 0xFF)
-      {
-      case  1: return CLIENT_HELLO_V2;
-      case 20: return CHANGE_CIPHER_SPEC;
-      case 21: return ALERT;
-      case 22: return HANDSHAKE;
-      case 23: return APPLICATION_DATA;
-      default: return null;
-      }
-  }
+    static final ContentType forInteger(final int value) {
+        switch (value & 0xFF) {
+            case 1:
+                return CLIENT_HELLO_V2;
+            case 20:
+                return CHANGE_CIPHER_SPEC;
+            case 21:
+                return ALERT;
+            case 22:
+                return HANDSHAKE;
+            case 23:
+                return APPLICATION_DATA;
+            default:
+                return null;
+        }
+    }
 
-  public int getValue()
-  {
-    return value;
-  }
+    public int getValue() {
+        return value;
+    }
 }

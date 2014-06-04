@@ -38,10 +38,10 @@ exception statement from your version.  */
 
 package org.metastatic.jessie.provider;
 
-import org.metastatic.jessie.SSLProtocolVersion;
-
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
+
+import org.metastatic.jessie.SSLProtocolVersion;
 
 public final class ProtocolVersion
        implements Comparable<ProtocolVersion>, Constructed
@@ -187,6 +187,8 @@ public final class ProtocolVersion
             return "TLSv1";
         } else if (this == TLS_1_1) {
             return "TLSv1.1";
+        } else if (this == TLS_1_2) {
+            return "TLSv1.2";
         } else {
             return "Unsupported; major=" + major + " minor=" + minor;
         }
