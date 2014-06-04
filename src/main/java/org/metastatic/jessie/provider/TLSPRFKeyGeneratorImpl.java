@@ -47,7 +47,7 @@ import java.security.spec.AlgorithmParameterSpec;
 
 public class TLSPRFKeyGeneratorImpl extends KeyGeneratorSpi
 {
-    private KeyGenerator md5gen, sha1gen;
+    private TLSKeyGeneratorImpl md5gen, sha1gen;
     private int keyLength;
     private String algName;
     private int macLength;
@@ -55,8 +55,8 @@ public class TLSPRFKeyGeneratorImpl extends KeyGeneratorSpi
 
     public TLSPRFKeyGeneratorImpl() throws NoSuchAlgorithmException
     {
-        md5gen = KeyGenerator.getInstance("P_MD5");
-        sha1gen = KeyGenerator.getInstance("P_SHA1");
+        md5gen = new TLSKeyGenerators.TLSKeyGeneratorMD5();
+        sha1gen = new TLSKeyGenerators.TLSKeyGeneratorSHA1();
     }
 
     @Override
@@ -80,12 +80,12 @@ public class TLSPRFKeyGeneratorImpl extends KeyGeneratorSpi
         byte[] shasecret = new byte[l_s];
         System.arraycopy(secret, 0, md5secret, 0, l_s);
         System.arraycopy(secret, secret.length - l_s, shasecret, 0, l_s);
-        md5gen.init(new TLSKeyGeneratorParameterSpec(((TLSKeyGeneratorParameterSpec) algorithmParameterSpec).getAlgName(),
+        md5gen.engineInit(new TLSKeyGeneratorParameterSpec(((TLSKeyGeneratorParameterSpec) algorithmParameterSpec).getAlgName(),
                 ((TLSKeyGeneratorParameterSpec) algorithmParameterSpec).getSeed(),
-                md5secret, keyLength, macLength, ivLength));
-        sha1gen.init(new TLSKeyGeneratorParameterSpec(((TLSKeyGeneratorParameterSpec) algorithmParameterSpec).getAlgName(),
+                md5secret, keyLength, macLength, ivLength), null);
+        sha1gen.engineInit(new TLSKeyGeneratorParameterSpec(((TLSKeyGeneratorParameterSpec) algorithmParameterSpec).getAlgName(),
                 ((TLSKeyGeneratorParameterSpec) algorithmParameterSpec).getSeed(),
-                shasecret, keyLength, macLength, ivLength));
+                shasecret, keyLength, macLength, ivLength), null);
     }
 
     @Override
@@ -97,8 +97,8 @@ public class TLSPRFKeyGeneratorImpl extends KeyGeneratorSpi
     @Override
     protected SecretKey engineGenerateKey()
     {
-        TLSSessionKeys md5key = (TLSSessionKeys) md5gen.generateKey();
-        TLSSessionKeys shakey = (TLSSessionKeys) sha1gen.generateKey();
+        TLSSessionKeys md5key = (TLSSessionKeys) md5gen.engineGenerateKey();
+        TLSSessionKeys shakey = (TLSSessionKeys) sha1gen.engineGenerateKey();
         return md5key.xor(shakey);
     }
 }

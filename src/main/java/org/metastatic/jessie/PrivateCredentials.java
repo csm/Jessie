@@ -38,38 +38,28 @@ exception statement from your version.  */
 
 package org.metastatic.jessie;
 
-import java.io.*;
+import org.bouncycastle.openssl.PEMReader;
 
-import java.math.BigInteger;
-
-import java.security.*;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.security.spec.DSAPrivateKeySpec;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.KeySpec;
-import java.security.spec.RSAPrivateCrtKeySpec;
-
-import java.util.*;
-import java.util.stream.Collectors;
-
-import javax.crypto.Cipher;
-import javax.crypto.EncryptedPrivateKeyInfo;
 import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
 import javax.net.ssl.ManagerFactoryParameters;
-import javax.security.auth.DestroyFailedException;
 import javax.security.auth.Destroyable;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
-
-import com.google.common.io.ByteStreams;
-import com.google.common.io.CharStreams;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.security.*;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.security.spec.InvalidKeySpecException;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * An instance of a manager factory parameters for holding a single
@@ -79,10 +69,6 @@ public class PrivateCredentials implements ManagerFactoryParameters
 {
     // Fields.
     // -------------------------------------------------------------------------
-
-    public static final String BEGIN_DSA = "-----BEGIN DSA PRIVATE KEY";
-    public static final String BEGIN_RSA = "-----BEGIN RSA PRIVATE KEY";
-    public static final String END = "-----END";
 
     private List<Entry> entries;
 
@@ -126,11 +112,14 @@ public class PrivateCredentials implements ManagerFactoryParameters
         try
         {
             String className = System.getProperty("org.metastatic.jessie.passwordCallbackHandler");
+            System.out.println("callback class name: " + className);
             Class clazz = Class.forName(className);
+            System.out.println("callback class: " + clazz);
             return (CallbackHandler) clazz.newInstance();
         }
         catch (ClassNotFoundException|InstantiationException|IllegalAccessException e)
         {
+            e.printStackTrace();
             return null;
         }
     }
@@ -143,68 +132,31 @@ public class PrivateCredentials implements ManagerFactoryParameters
         Collection<? extends Certificate> certs = cf.generateCertificates(certChain);
         X509Certificate[] chain = certs.toArray(new X509Certificate[certs.size()]);
 
-        String alg = null;
-        List<String> pkLines = CharStreams.readLines(new InputStreamReader(privateKey));
-        Iterator<String> lines = pkLines.iterator();
-        StringBuilder base64blob = new StringBuilder();
-        while (lines.hasNext())
-        {
-            String line = lines.next();
-            if (line.startsWith(BEGIN_DSA))
-                alg = "DSA";
-            else if (line.startsWith(BEGIN_RSA))
-                alg = "RSA";
-            else if (line.trim().isEmpty())
-                continue;
-            else if (line.startsWith("Proc-Type: 4,ENCRYPTED"))
-                continue;
-            else if (line.startsWith("DEK-Info: AES-"))
-            else if (line.startsWith(END))
-                break;
-        }
-        outer:for (int i = 0; i < pkData.length - BEGIN_DSA.length; i++)
-        {
-            boolean isRsa = true;
-            boolean isDsa = true;
-            for (int j = 0; j < BEGIN_DSA.length; j++)
-            {
-                byte b = pkData[j + i];
-                if (b != BEGIN_DSA[j])
-                    isDsa = false;
-                if (b != BEGIN_RSA[j])
-                    isRsa = false;
-                if (!isDsa && !isRsa)
-                    continue outer;
-            }
-            if (isDsa)
-            {
-                alg = "DSA";
-                break;
-            }
-            if (isRsa)
-            {
-                alg = "RSA";
-                break;
-            }
-        }
-        if (alg == null)
-            throw new InvalidKeyException("unknown algorithm in PEM file");
-
-        EncryptedPrivateKeyInfo epki = new EncryptedPrivateKeyInfo(pkData);
-        Cipher cipher = Cipher.getInstance(epki.getAlgName());
         CallbackHandler callbackHandler = getCallbackHandler();
         if (callbackHandler == null)
             throw new InvalidKeyException("no callback handler configured, can't get password for private key");
         PasswordCallback callback = new PasswordCallback("Password for private key", false);
         callbackHandler.handle(new Callback[] { callback });
-        PBEKeySpec keySpec = new PBEKeySpec(callback.getPassword());
-        SecretKeyFactory skFactory = SecretKeyFactory.getInstance(epki.getAlgName());
-        Key key = skFactory.generateSecret(keySpec);
-        AlgorithmParameters params = epki.getAlgParameters();
-        cipher.init(Cipher.DECRYPT_MODE, key, params);
-        KeySpec spec = epki.getKeySpec(cipher);
-        KeyFactory factory = KeyFactory.getInstance(alg);
-        PrivateKey pk = factory.generatePrivate(spec);
+        PEMReader pemReader = new PEMReader(new InputStreamReader(privateKey), () -> {
+            try
+            {
+                callbackHandler.handle(new Callback[]{ callback });
+                return callback.getPassword();
+            }
+            catch (IOException | UnsupportedCallbackException e)
+            {
+                return new char[0];
+            }
+        });
+        Object o = pemReader.readObject();
+
+        PrivateKey pk = null;
+        if (o instanceof PrivateKey)
+            pk = (PrivateKey) o;
+        else if (o instanceof KeyPair)
+            pk = ((KeyPair) o).getPrivate();
+        else
+            throw new InvalidKeyException("was expecting a key pair or private key");
 
         entries.add(new Entry(pk, chain));
     }

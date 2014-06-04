@@ -37,6 +37,7 @@ exception statement from your version.  */
 
 package org.metastatic.jessie.test;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.Test;
 import org.metastatic.jessie.PrivateCredentials;
 
@@ -46,10 +47,13 @@ import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.security.cert.Certificate;
+import java.security.Security;
+import java.security.cert.X509Certificate;
 
 public class TestPrivateCredentials
 {
-    public class CallbackHandlerImpl implements CallbackHandler
+    public static class CallbackHandlerImpl implements CallbackHandler
     {
         static final String password = "changeit";
 
@@ -124,7 +128,9 @@ public class TestPrivateCredentials
     public void test1() throws Exception
     {
         PrivateCredentials creds = new PrivateCredentials();
-        System.setProperty("org.metastatic.jessie.passwordCallbackHandler", "org.metastatic.jessie.test.TestPrivateCredentials$CallbackHandlerImpl");
+        Security.addProvider(new BouncyCastleProvider());
+        System.setProperty("org.metastatic.jessie.passwordCallbackHandler", CallbackHandlerImpl.class.getName());
         creds.add(new ByteArrayInputStream(cert.getBytes()), new ByteArrayInputStream(key.getBytes()));
+        System.out.printf("cert: %s%nkey: %s%n", creds.getCertChains().get(0)[0], creds.getPrivateKeys().get(0));
     }
 }

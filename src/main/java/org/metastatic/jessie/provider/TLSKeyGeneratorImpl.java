@@ -90,7 +90,7 @@ class TLSKeyGeneratorImpl extends KeyGeneratorSpi
     }
 
     @Override
-    protected void engineInit(AlgorithmParameterSpec algorithmParameterSpec, SecureRandom secureRandom)
+    public void engineInit(AlgorithmParameterSpec algorithmParameterSpec, SecureRandom secureRandom)
             throws InvalidAlgorithmParameterException
     {
         if (!(algorithmParameterSpec instanceof TLSKeyGeneratorParameterSpec))
@@ -107,7 +107,7 @@ class TLSKeyGeneratorImpl extends KeyGeneratorSpi
         {
             throw new InvalidAlgorithmParameterException(e);
         }
-        idx = 0;
+        idx = buffer.length;
         init = true;
         keyLength = ((TLSKeyGeneratorParameterSpec) algorithmParameterSpec).getKeyLength();
         macLength = ((TLSKeyGeneratorParameterSpec) algorithmParameterSpec).getMacLength();
@@ -122,18 +122,11 @@ class TLSKeyGeneratorImpl extends KeyGeneratorSpi
     }
 
     @Override
-    protected SecretKey engineGenerateKey()
+    public SecretKey engineGenerateKey()
     {
         byte[] keyMaterial = new byte[2 * (keyLength + macLength + ivLength)];
-        nextBytes(keyMaterial, 0, keyLength);
-        TLSSessionKeys.Builder builder = new TLSSessionKeys.Builder();
-        builder.withClientWriteMACKey(keyMaterial, 0, macLength)
-                .withServerWriteMACKey(keyMaterial, macLength, macLength)
-                .withClientWriteKey(keyMaterial, 2 * macLength, keyLength)
-                .withServerWriteKey(keyMaterial, 2 * macLength + keyLength, keyLength)
-                .withClientWriteIV(keyMaterial, 2 * (macLength + keyLength), ivLength)
-                .withServerWriteIV(keyMaterial, 2 * (macLength + keyLength) + ivLength, ivLength);
-        return builder.build();
+        nextBytes(keyMaterial, 0, keyMaterial.length);
+        return new TLSSessionKeys(keyMaterial, keyLength, macLength, ivLength);
     }
 
     private void nextBytes(byte[] buf, int off, int len)
@@ -177,9 +170,6 @@ class TLSKeyGeneratorImpl extends KeyGeneratorSpi
      *
      *   A(0) = seed
      *   A(i) = HMAC_hash(secret, A(i-1))
-     *
-     * For simplicity, we compute an 80-byte block on each call, which
-     * corresponds to five iterations of MD5, and four of SHA-1.
      */
     private synchronized void fillBuffer()
     {
@@ -190,7 +180,8 @@ class TLSKeyGeneratorImpl extends KeyGeneratorSpi
 
         hmac.update(a);
         hmac.update(seed);
-        hmac.doFinal(buffer);
+        byte[] digest = hmac.doFinal();
+        System.arraycopy(digest, 0, buffer, 0, buffer.length);
         hmac.reset();
 
         idx = 0;
