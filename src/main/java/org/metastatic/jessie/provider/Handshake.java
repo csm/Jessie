@@ -210,8 +210,18 @@ public final class Handshake implements Constructed {
         out.print("  type: ");
         out.print(type());
         out.println(";");
-        Body body = body();
-        out.println(body.toString(prefix != null ? (prefix + "  ") : "  "));
+        // We can only inspect the contents of the key exchange if we
+        // know what the cipher suite is.
+        if (suite != null || (type() != Type.CLIENT_KEY_EXCHANGE && type() != Type.SERVER_KEY_EXCHANGE))
+        {
+            Body body = body();
+            out.println(body.toString(prefix != null ? (prefix + "  ") : "  "));
+        }
+        else
+        {
+            out.println((prefix != null ? (prefix + "  ") : "  ") + "  [Unresolved body]");
+            out.println(Util.hexDump(bodyBuffer(), prefix != null ? (prefix + "  ") : "  "));
+        }
         if (prefix != null) out.print(prefix);
         out.print("} Handshake;");
         return str.toString();

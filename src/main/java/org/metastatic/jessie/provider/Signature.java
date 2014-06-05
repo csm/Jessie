@@ -45,113 +45,102 @@ import java.nio.ByteBuffer;
 
 /**
  * The signature structure.
- *
+ * <p/>
  * <pre>
-select (SignatureAlgorithm)
-{
-case anonymous:
-  struct { };
-case rsa:
-  digitally-signed struct
-  {
-    opaque md5_hash[16];
-    opaque sha_hash[20];
-  };
-case dsa:
-  digitally-signed struct
-  {
-    opaque sha_hash[20];
-  };
-} Signature;</pre>
+ * select (SignatureAlgorithm)
+ * {
+ * case anonymous:
+ * struct { };
+ * case rsa:
+ * digitally-signed struct
+ * {
+ * opaque md5_hash[16];
+ * opaque sha_hash[20];
+ * };
+ * case dsa:
+ * digitally-signed struct
+ * {
+ * opaque sha_hash[20];
+ * };
+ * } Signature;</pre>
  */
-public class Signature implements Builder, Constructed
-{
+public class Signature implements Builder, Constructed {
 
-  // Fields.
-  // -------------------------------------------------------------------------
+    // Fields.
+    // -------------------------------------------------------------------------
 
-  private final ByteBuffer buffer;
-  private final SignatureAlgorithm alg;
+    private final ByteBuffer buffer;
+    private final SignatureAlgorithm alg;
 
-  // Constructor.
-  // -------------------------------------------------------------------------
+    // Constructor.
+    // -------------------------------------------------------------------------
 
-  public Signature (final ByteBuffer buffer, final SignatureAlgorithm alg)
-  {
-    this.buffer = buffer;
-    this.alg = alg;
-  }
+    public Signature(final ByteBuffer buffer, final SignatureAlgorithm alg) {
+        this.buffer = buffer;
+        this.alg = alg;
+    }
 
-  public Signature (final byte[] sigValue, final SignatureAlgorithm alg)
-  {
-    buffer = ByteBuffer.allocate(sigValue.length + 2);
-    buffer.putShort((short) sigValue.length);
-    buffer.put(sigValue);
-    buffer.position(0);
-    this.alg = alg;
-  }
+    public Signature(final byte[] sigValue, final SignatureAlgorithm alg) {
+        buffer = ByteBuffer.allocate(sigValue.length + 2);
+        buffer.putShort((short) sigValue.length);
+        buffer.put(sigValue);
+        buffer.position(0);
+        this.alg = alg;
+    }
 
-  // Instance methods.
-  // -------------------------------------------------------------------------
+    // Instance methods.
+    // -------------------------------------------------------------------------
 
-  public int length ()
-  {
-    if (alg.equals (SignatureAlgorithm.ANONYMOUS))
-      return 0;
-    return (buffer.getShort (0) & 0xFFFF) + 2;
-  }
+    public int length() {
+        if (alg.equals(SignatureAlgorithm.ANONYMOUS))
+            return 0;
+        return (buffer.getShort(0) & 0xFFFF) + 2;
+    }
 
-  public ByteBuffer buffer()
-  {
-    return (ByteBuffer) buffer.duplicate().limit(length());
-  }
+    public ByteBuffer buffer() {
+        return (ByteBuffer) buffer.duplicate().limit(length());
+    }
 
-  public byte[] signature ()
-  {
-    if (alg.equals (SignatureAlgorithm.ANONYMOUS))
-      return new byte[0];
-    int length = buffer.getShort (0) & 0xFFFF;
-    byte[] buf = new byte[length];
-    ((ByteBuffer) buffer.duplicate().position(2)).get(buf);
-    return buf;
-  }
+    public byte[] signature() {
+        if (alg.equals(SignatureAlgorithm.ANONYMOUS))
+            return new byte[0];
+        int length = buffer.getShort(0) & 0xFFFF;
+        byte[] buf = new byte[length];
+        ((ByteBuffer) buffer.duplicate().position(2)).get(buf);
+        return buf;
+    }
 
-  public void setSignature (final byte[] signature)
-  {
-    setSignature (signature, 0, signature.length);
-  }
+    public void setSignature(final byte[] signature) {
+        setSignature(signature, 0, signature.length);
+    }
 
-  public void setSignature (final byte[] signature, final int offset, final int length)
-  {
-    if (alg.equals (SignatureAlgorithm.ANONYMOUS))
-      return;
-    buffer.putShort (0, (short) length);
-    buffer.position (2);
-    buffer.put (signature, offset, length);
-  }
+    public void setSignature(final byte[] signature, final int offset, final int length) {
+        if (alg.equals(SignatureAlgorithm.ANONYMOUS))
+            return;
+        buffer.putShort(0, (short) length);
+        buffer.position(2);
+        buffer.put(signature, offset, length);
+    }
 
-  public String toString ()
-  {
-    return toString (null);
-  }
+    public String toString() {
+        return toString(null);
+    }
 
-  public String toString (final String prefix)
-  {
-    StringWriter str = new StringWriter();
-    PrintWriter out = new PrintWriter(str);
-    if (prefix != null)
-      out.print (prefix);
-    out.println("struct {");
-    if (!alg.equals (SignatureAlgorithm.ANONYMOUS))
-      {
-        String subprefix = "  ";
+    public String toString(final String prefix) {
+        StringWriter str = new StringWriter();
+        PrintWriter out = new PrintWriter(str);
         if (prefix != null)
-          subprefix = prefix + subprefix;
-        out.print (Util.hexDump (signature (), subprefix));
-      }
-    if (prefix != null)
-      out.print (prefix);
-    out.print ("} Signature;");
-    return str.toString();
-  }
+            out.print(prefix);
+        out.println("struct {");
+        if (!alg.equals(SignatureAlgorithm.ANONYMOUS)) {
+            String subprefix = "  ";
+            if (prefix != null)
+                subprefix = prefix + subprefix;
+            out.print(Util.hexDump(signature(), subprefix));
+        }
+        if (prefix != null)
+            out.print(prefix);
+        out.print("} Signature;");
+        return str.toString();
+    }
 }
