@@ -54,6 +54,7 @@ import static org.junit.Assert.assertEquals;
 public class TestHandshake2
 {
     // Test 1: curl https://developer.apple.com/
+    // Captured with wireshark.
 
     @Test
     public void testClientHello1() throws Exception {

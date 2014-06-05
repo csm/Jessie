@@ -40,23 +40,28 @@ package org.metastatic.jessie.provider;
 
 public enum SignatureAlgorithm
 {
-  ANONYMOUS, RSA, DSA;
+    ANONYMOUS, RSA, DSA, ECDSA;
 
-  /**
-   * Returns the algorithm name for this signature algorithm, which can
-   * be used with the JCA API to get a {@link java.security.Signature} for
-   * that algorithm.
-   *
-   * @return The algorithm name.
-   */
-  public String algorithm()
-  {
-    switch (this)
-      {
-        case ANONYMOUS: return null;
-        case RSA: return "TLSv1.1-RSA";
-        case DSA: return "DSS";
-      }
-    return null;
-  }
+    /**
+     * Returns the algorithm name for this signature algorithm, which can
+     * be used with the JCA API to get a {@link java.security.Signature} for
+     * that algorithm.
+     *
+     * @return The algorithm name.
+     */
+    public String algorithm()
+    {
+        switch (this)
+        {
+            case ANONYMOUS:
+                return null;
+            case RSA:
+                return "TLSv1.1-RSA";
+            case DSA:
+                return "DSS";
+            case ECDSA:
+                return "ECDSA";
+        }
+        return null;
+    }
 }

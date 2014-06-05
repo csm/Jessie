@@ -478,6 +478,193 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
         }
     }
 
+    // Elliptic curve cipher suites (RFC 4492).
+    public static final int ECSUITES_MAJOR = 0xc0;
+    public static final class TLS_ECDH_ECDSA_WITH_NULL_SHA extends CipherSuite {
+
+        public static final int MINOR = 0x01;
+
+        public TLS_ECDH_ECDSA_WITH_NULL_SHA() {
+            super(CipherAlgorithm.NULL,
+                  KeyExchangeAlgorithm.ECDH_ECDSA,
+                  SignatureAlgorithm.ECDSA,
+                  MacAlgorithm.SHA, 0, ECSUITES_MAJOR, MINOR,
+                  "TLS_ECDH_ECDSA_WITH_NULL_SHA", false);
+        }
+    }
+    // skipping:
+    //      CipherSuite TLS_ECDH_ECDSA_WITH_RC4_128_SHA        = { 0xC0, 0x02 }
+    //      CipherSuite TLS_ECDH_ECDSA_WITH_3DES_EDE_CBC_SHA   = { 0xC0, 0x03 }
+
+    public static final class TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA extends CipherSuite {
+
+        public static final int MINOR = 0x04;
+
+        public TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA() {
+            super(CipherAlgorithm.AES,
+                  KeyExchangeAlgorithm.ECDH_ECDSA,
+                  SignatureAlgorithm.ECDSA,
+                  MacAlgorithm.SHA, 16, ECSUITES_MAJOR, MINOR,
+                  "TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA", true);
+        }
+    }
+    public static final class TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA extends CipherSuite {
+
+        public static final int MINOR = 0x05;
+
+        public TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA() {
+            super(CipherAlgorithm.AES,
+                  KeyExchangeAlgorithm.ECDH_ECDSA,
+                  SignatureAlgorithm.ECDSA,
+                  MacAlgorithm.SHA, 32, ECSUITES_MAJOR, MINOR,
+                  "TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA", true);
+        }
+    }
+    public static final class TLS_ECDHE_ECDSA_WITH_NULL_SHA extends CipherSuite {
+        public static final int MINOR = 0x06;
+        public TLS_ECDHE_ECDSA_WITH_NULL_SHA() {
+            super(CipherAlgorithm.NULL,
+                  KeyExchangeAlgorithm.ECDHE_ECDSA,
+                  SignatureAlgorithm.ECDSA,
+                  MacAlgorithm.SHA, 0, ECSUITES_MAJOR, MINOR,
+                  "TLS_ECDHE_ECDSA_WITH_NULL_SHA", false);
+        }
+    }
+
+    // Skipping:
+    //     CipherSuite TLS_ECDHE_ECDSA_WITH_RC4_128_SHA       = { 0xC0, 0x07 }
+    //     CipherSuite TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA  = { 0xC0, 0x08 }
+
+    public static final class TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA extends CipherSuite {
+        public static final int MINOR = 0x09;
+        public TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA()
+        {
+            super(CipherAlgorithm.AES,
+                  KeyExchangeAlgorithm.ECDHE_ECDSA,
+                  SignatureAlgorithm.ECDSA,
+                  MacAlgorithm.SHA, 16, ECSUITES_MAJOR, MINOR,
+                  "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA", true);
+        }
+    }
+    public static final class TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA extends CipherSuite {
+        public static final int MINOR = 0x0a;
+        public TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA()
+        {
+            super(CipherAlgorithm.AES,
+                    KeyExchangeAlgorithm.ECDHE_ECDSA,
+                    SignatureAlgorithm.ECDSA,
+                    MacAlgorithm.SHA, 32, ECSUITES_MAJOR, MINOR,
+                    "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA", true);
+        }
+    }
+
+    public static final class TLS_ECDH_RSA_WITH_NULL_SHA extends CipherSuite {
+        public static final int MINOR = 0x0b;
+        public TLS_ECDH_RSA_WITH_NULL_SHA() {
+            super(CipherAlgorithm.NULL,
+                  KeyExchangeAlgorithm.ECDH_RSA,
+                  SignatureAlgorithm.RSA,
+                  MacAlgorithm.SHA, 0, ECSUITES_MAJOR, MINOR,
+                  "TLS_ECDH_RSA_WITH_NULL_SHA", false);
+        }
+    }
+
+    // Skipping:
+    // CipherSuite TLS_ECDH_RSA_WITH_RC4_128_SHA          = { 0xC0, 0x0C }
+    // CipherSuite TLS_ECDH_RSA_WITH_3DES_EDE_CBC_SHA     = { 0xC0, 0x0D }
+    public static final class TLS_ECDH_RSA_WITH_AES_128_CBC_SHA extends CipherSuite {
+        public static final int MINOR = 0x0e;
+
+        public TLS_ECDH_RSA_WITH_AES_128_CBC_SHA()
+        {
+            super(CipherAlgorithm.AES,
+                  KeyExchangeAlgorithm.ECDH_RSA,
+                  SignatureAlgorithm.RSA,
+                  MacAlgorithm.SHA, 16, ECSUITES_MAJOR, MINOR,
+                  "TLS_ECDH_RSA_WITH_AES_128_CBC_SHA", true);
+        }
+    }
+    public static final class TLS_ECDH_RSA_WITH_AES_256_CBC_SHA extends CipherSuite {
+        public static final int MINOR = 0x0f;
+
+        public TLS_ECDH_RSA_WITH_AES_256_CBC_SHA()
+        {
+            super(CipherAlgorithm.AES,
+                    KeyExchangeAlgorithm.ECDH_RSA,
+                    SignatureAlgorithm.RSA,
+                    MacAlgorithm.SHA, 32, ECSUITES_MAJOR, MINOR,
+                    "TLS_ECDH_RSA_WITH_AES_256_CBC_SHA", true);
+        }
+    }
+
+    public static final class TLS_ECDHE_RSA_WITH_NULL_SHA extends CipherSuite {
+        public static final int MINOR = 0x10;
+        public TLS_ECDHE_RSA_WITH_NULL_SHA()
+        {
+            super(CipherAlgorithm.NULL,
+                  KeyExchangeAlgorithm.ECDHE_RSA,
+                  SignatureAlgorithm.RSA,
+                  MacAlgorithm.SHA, 0, ECSUITES_MAJOR, MINOR,
+                  "TLS_ECDHE_RSA_WITH_NULL_SHA", false);
+        }
+    }
+    // CipherSuite TLS_ECDHE_RSA_WITH_RC4_128_SHA         = { 0xC0, 0x11 }
+    // CipherSuite TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA    = { 0xC0, 0x12 }
+    public static final class TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA extends CipherSuite {
+        public static final int MINOR = 0x13;
+        public TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA() {
+            super(CipherAlgorithm.AES,
+                  KeyExchangeAlgorithm.ECDHE_RSA,
+                  SignatureAlgorithm.RSA,
+                  MacAlgorithm.SHA, 16, ECSUITES_MAJOR, MINOR,
+                  "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA", true);
+        }
+    }
+    public static final class TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA extends CipherSuite {
+        public static final int MINOR = 0x14;
+        public TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA() {
+            super(CipherAlgorithm.AES,
+                  KeyExchangeAlgorithm.ECDHE_RSA,
+                  SignatureAlgorithm.RSA,
+                  MacAlgorithm.SHA, 32, ECSUITES_MAJOR, MINOR,
+                  "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA", true);
+        }
+    }
+
+    public static final class TLS_ECDH_anon_WITH_NULL_SHA extends CipherSuite {
+        public static final int MINOR = 0x15;
+        public TLS_ECDH_anon_WITH_NULL_SHA() {
+            super(CipherAlgorithm.NULL,
+                  KeyExchangeAlgorithm.ECDH_anon,
+                  SignatureAlgorithm.ANONYMOUS,
+                  MacAlgorithm.SHA, 0, ECSUITES_MAJOR, MINOR,
+                  "TLS_ECDH_anon_WITH_NULL_SHA", false);
+        }
+    }
+    // CipherSuite TLS_ECDH_anon_WITH_RC4_128_SHA         = { 0xC0, 0x16 }
+    // CipherSuite TLS_ECDH_anon_WITH_3DES_EDE_CBC_SHA    = { 0xC0, 0x17 }
+    public static final class TLS_ECDH_anon_WITH_AES_128_CBC_SHA extends CipherSuite {
+        public static final int MINOR = 0x18;
+        public TLS_ECDH_anon_WITH_AES_128_CBC_SHA() {
+            super(CipherAlgorithm.AES,
+                  KeyExchangeAlgorithm.ECDH_anon,
+                  SignatureAlgorithm.ANONYMOUS,
+                  MacAlgorithm.SHA, 16, ECSUITES_MAJOR, MINOR,
+                  "TLS_ECDH_anon_WITH_AES_128_CBC_SHA", true);
+        }
+    }
+    public static final class TLS_ECDH_anon_WITH_AES_256_CBC_SHA extends CipherSuite {
+        public static final int MINOR = 0x19;
+        public TLS_ECDH_anon_WITH_AES_256_CBC_SHA() {
+            super(CipherAlgorithm.AES,
+                  KeyExchangeAlgorithm.ECDH_anon,
+                  SignatureAlgorithm.ANONYMOUS,
+                  MacAlgorithm.SHA, 32, ECSUITES_MAJOR, MINOR,
+                  "TLS_ECDH_anon_WITH_AES_256_CBC_SHA", true);
+        }
+    }
+
+
     private final CipherAlgorithm cipherAlgorithm;
     private final KeyExchangeAlgorithm keyExchangeAlgorithm;
     private final SignatureAlgorithm signatureAlgorithm;
@@ -750,30 +937,6 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                 return new TLS_DHE_DSS_WITH_AES_256_CBC_SHA();
             case 0x39:
                 return new TLS_DHE_RSA_WITH_AES_256_CBC_SHA();
-      /*case 0x50: return new TLS_SRP_SHA_WITH_3DES_EDE_CBC_SHA();
-      case 0x51: return new TLS_SRP_SHA_RSA_WITH_3DES_EDE_CBC_SHA();
-      case 0x52: return new TLS_SRP_SHA_DSS_WITH_3DES_EDE_CBC_SHA();
-      case 0x53: return new TLS_SRP_SHA_WITH_AES_128_CBC_SHA();
-      case 0x54: return new TLS_SRP_SHA_RSA_WITH_AES_128_CBC_SHA();
-      case 0x55: return new TLS_SRP_SHA_DSS_WITH_AES_128_CBC_SHA();
-      case 0x56: return new TLS_SRP_SHA_WITH_AES_256_CBC_SHA();
-      case 0x57: return new TLS_SRP_SHA_RSA_WITH_AES_256_CBC_SHA();
-      case 0x58: return new TLS_SRP_SHA_DSS_WITH_AES_256_CBC_SHA();
-      case 0x70: return new TLS_DHE_DSS_WITH_CAST_128_CBC_SHA();
-      case 0x71: return new TLS_DHE_DSS_WITH_CAST_128_CBC_RMD();
-      case 0x72: return new TLS_DHE_DSS_WITH_3DES_EDE_CBC_RMD();
-      case 0x73: return new TLS_DHE_DSS_WITH_AES_128_CBC_RMD();
-      case 0x74: return new TLS_DHE_DSS_WITH_AES_256_CBC_RMD();
-      case 0x75: return new TLS_DHE_RSA_WITH_CAST_128_CBC_SHA();
-      case 0x76: return new TLS_DHE_RSA_WITH_CAST_128_CBC_RMD();
-      case 0x77: return new TLS_DHE_RSA_WITH_3DES_EDE_CBC_RMD();
-      case 0x78: return new TLS_DHE_RSA_WITH_AES_128_CBC_RMD();
-      case 0x79: return new TLS_DHE_RSA_WITH_AES_256_CBC_RMD();
-      case 0x7A: return new TLS_RSA_WITH_CAST_128_CBC_SHA();
-      case 0x7B: return new TLS_RSA_WITH_CAST_128_CBC_RMD();
-      case 0x7C: return new TLS_RSA_WITH_3DES_EDE_CBC_RMD();
-      case 0x7D: return new TLS_RSA_WITH_AES_128_CBC_RMD();
-      case 0x7E: return new TLS_RSA_WITH_AES_256_CBC_RMD();*/
             case 0x8A:
                 return new TLS_PSK_WITH_RC4_128_SHA();
             case 0x8B:
@@ -798,6 +961,42 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                 return new TLS_RSA_PSK_WITH_AES_128_CBC_SHA();
             case 0x95:
                 return new TLS_RSA_PSK_WITH_AES_256_CBC_SHA();
+        }
+        if ((id[0] & 0xFF) == ECSUITES_MAJOR)
+        {
+            switch (id[1])
+            {
+                case TLS_ECDH_ECDSA_WITH_NULL_SHA.MINOR:
+                    return new TLS_ECDH_ECDSA_WITH_NULL_SHA();
+                case TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA.MINOR:
+                    return new TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA();
+                case TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA.MINOR:
+                    return new TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA();
+                case TLS_ECDHE_ECDSA_WITH_NULL_SHA.MINOR:
+                    return new TLS_ECDHE_ECDSA_WITH_NULL_SHA();
+                case TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA.MINOR:
+                    return new TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA();
+                case TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA.MINOR:
+                    return new TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA();
+                case TLS_ECDH_RSA_WITH_NULL_SHA.MINOR:
+                    return new TLS_ECDH_RSA_WITH_NULL_SHA();
+                case TLS_ECDH_RSA_WITH_AES_128_CBC_SHA.MINOR:
+                    return new TLS_ECDH_RSA_WITH_AES_128_CBC_SHA();
+                case TLS_ECDH_RSA_WITH_AES_256_CBC_SHA.MINOR:
+                    return new TLS_ECDH_RSA_WITH_AES_256_CBC_SHA();
+                case TLS_ECDHE_RSA_WITH_NULL_SHA.MINOR:
+                    return new TLS_ECDHE_RSA_WITH_NULL_SHA();
+                case TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA.MINOR:
+                    return new TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA();
+                case TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA.MINOR:
+                    return new TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA();
+                case TLS_ECDH_anon_WITH_NULL_SHA.MINOR:
+                    return new TLS_ECDH_anon_WITH_NULL_SHA();
+                case TLS_ECDH_anon_WITH_AES_128_CBC_SHA.MINOR:
+                    return new TLS_ECDH_anon_WITH_AES_128_CBC_SHA();
+                case TLS_ECDH_anon_WITH_AES_256_CBC_SHA.MINOR:
+                    return new TLS_ECDH_anon_WITH_AES_256_CBC_SHA();
+            }
         }
         return this;
     }

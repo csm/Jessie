@@ -43,15 +43,19 @@ package org.metastatic.jessie.provider;
  */
 public enum KeyExchangeAlgorithm
 {
-  NONE,
-  RSA,
-  DH_DSS,
-  DH_RSA,
-  DH_anon,
-  DHE_DSS,
-  DHE_RSA,
-//  SRP,
-  PSK,
-  DHE_PSK,
-  RSA_PSK;
+    NONE,
+    RSA,
+    DH_DSS,
+    DH_RSA,
+    DH_anon,
+    DHE_DSS,
+    DHE_RSA,
+    PSK,
+    DHE_PSK,
+    RSA_PSK,
+    ECDH_ECDSA,
+    ECDHE_ECDSA,
+    ECDH_RSA,
+    ECDHE_RSA,
+    ECDH_anon;
 }
