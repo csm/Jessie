@@ -46,195 +46,179 @@ import java.nio.ByteOrder;
 
 /**
  * A ClientHello handshake message.
- *
+ * <p/>
  * <pre>
-struct
-{
-  ProtocolVersion   client_version;                // 2
-  Random            random;                        // 32
-  SessionID         session_id;                    // 1 + 0..32
-  CipherSuite       cipher_suites&lt;2..2^16-1&gt;
-  CompressionMethod compression_methods&lt;1..2^8-1&gt;
-  Extension         client_hello_extension_list&lt;0..2^16-1&gt;
-} ClientHello;
-</pre>
+ * struct
+ * {
+ * ProtocolVersion   client_version;                // 2
+ * Random            random;                        // 32
+ * SessionID         session_id;                    // 1 + 0..32
+ * CipherSuite       cipher_suites&lt;2..2^16-1&gt;
+ * CompressionMethod compression_methods&lt;1..2^8-1&gt;
+ * Extension         client_hello_extension_list&lt;0..2^16-1&gt;
+ * } ClientHello;
+ * </pre>
  */
-public class ClientHello implements Handshake.Body
-{
+public class ClientHello implements Handshake.Body {
 
-  // Fields.
-  // -------------------------------------------------------------------------
+    // Fields.
+    // -------------------------------------------------------------------------
 
-  // To help track offsets into the message:
-  // The location of the 'random' field.
-  protected static final int RANDOM_OFFSET = 2;
-  // The location of the sesion_id length.
-  protected static final int SESSID_OFFSET = 32 + RANDOM_OFFSET;
-  // The location of the session_id bytes (if any).
-  protected static final int SESSID_OFFSET2 = SESSID_OFFSET + 1;
+    // To help track offsets into the message:
+    // The location of the 'random' field.
+    protected static final int RANDOM_OFFSET = 2;
+    // The location of the sesion_id length.
+    protected static final int SESSID_OFFSET = 32 + RANDOM_OFFSET;
+    // The location of the session_id bytes (if any).
+    protected static final int SESSID_OFFSET2 = SESSID_OFFSET + 1;
 
-  protected ByteBuffer buffer;
-  protected boolean disableExtensions;
+    protected ByteBuffer buffer;
+    protected boolean disableExtensions;
 
-  // Constructor.
-  // -------------------------------------------------------------------------
+    // Constructor.
+    // -------------------------------------------------------------------------
 
-  public ClientHello (final ByteBuffer buffer)
-  {
-    this.buffer = buffer.duplicate().order(ByteOrder.BIG_ENDIAN);
-    disableExtensions = false;
-  }
+    public ClientHello(final ByteBuffer buffer) {
+        this.buffer = buffer.duplicate().order(ByteOrder.BIG_ENDIAN);
+        disableExtensions = false;
+    }
 
-  // Instance methods.
-  // -------------------------------------------------------------------------
+    // Instance methods.
+    // -------------------------------------------------------------------------
 
-  public int length()
-  {
-    int len = SESSID_OFFSET2 + buffer.get(SESSID_OFFSET);
-    len += (buffer.getShort(len) & 0xFFFF) + 2;
-    len += (buffer.get(len) & 0xFF) + 1;
-    if (!disableExtensions && len + 1 < buffer.capacity())
-      len += (buffer.getShort(len) & 0xFFFF) + 2;
-    return len;
-  }
+    public int length() {
+        int len = SESSID_OFFSET2 + buffer.get(SESSID_OFFSET);
+        len += (buffer.getShort(len) & 0xFFFF) + 2;
+        len += (buffer.get(len) & 0xFF) + 1;
+        if (!disableExtensions && len + 1 < buffer.capacity())
+            len += (buffer.getShort(len) & 0xFFFF) + 2;
+        return len;
+    }
 
-  /**
-   * Gets the protocol version field.
-   *
-   * @return The protocol version field.
-   */
-  public ProtocolVersion version()
-  {
-    return ProtocolVersion.getInstance (buffer.getShort (0));
-  }
+    /**
+     * Gets the protocol version field.
+     *
+     * @return The protocol version field.
+     */
+    public ProtocolVersion version() {
+        return ProtocolVersion.getInstance(buffer.getShort(0));
+    }
 
-  /**
-   * Gets the SSL nonce.
-   *
-   * @return The nonce.
-   */
-  public Random random()
-  {
-    ByteBuffer randomBuf =
-      ((ByteBuffer) buffer.duplicate ().position (RANDOM_OFFSET)
-       .limit (SESSID_OFFSET)).slice ();
-    return new Random (randomBuf);
-  }
+    /**
+     * Gets the SSL nonce.
+     *
+     * @return The nonce.
+     */
+    public Random random() {
+        ByteBuffer randomBuf =
+                ((ByteBuffer) buffer.duplicate().position(RANDOM_OFFSET)
+                        .limit(SESSID_OFFSET)).slice();
+        return new Random(randomBuf);
+    }
 
-  public byte[] sessionId()
-  {
-    int idlen = buffer.get (SESSID_OFFSET) & 0xFF;
-    byte[] sessionId = new byte[idlen];
-    buffer.position (SESSID_OFFSET2);
-    buffer.get (sessionId);
-    return sessionId;
-  }
+    public byte[] sessionId() {
+        int idlen = buffer.get(SESSID_OFFSET) & 0xFF;
+        byte[] sessionId = new byte[idlen];
+        buffer.position(SESSID_OFFSET2);
+        buffer.get(sessionId);
+        return sessionId;
+    }
 
-  public CipherSuiteList cipherSuites()
-  {
-    int offset = getCipherSuitesOffset ();
+    public CipherSuiteList cipherSuites() {
+        int offset = getCipherSuitesOffset();
 
-    // We give the CipherSuiteList all the remaining bytes to play with,
-    // since this might be an in-construction packet that will fill in
-    // the length field itself.
-    ByteBuffer listBuf = ((ByteBuffer) buffer.duplicate ().position (offset)
-                          .limit (buffer.capacity ())).slice ();
-    return new CipherSuiteList (listBuf, version ());
-  }
+        // We give the CipherSuiteList all the remaining bytes to play with,
+        // since this might be an in-construction packet that will fill in
+        // the length field itself.
+        ByteBuffer listBuf = ((ByteBuffer) buffer.duplicate().position(offset)
+                .limit(buffer.capacity())).slice();
+        return new CipherSuiteList(listBuf, version());
+    }
 
-  public CompressionMethodList compressionMethods()
-  {
-    int offset = getCompressionMethodsOffset ();
-    ByteBuffer listBuf = ((ByteBuffer) buffer.duplicate ().position (offset)
-                          .limit (buffer.capacity ())).slice ();
-    return new CompressionMethodList (listBuf);
-  }
+    public CompressionMethodList compressionMethods() {
+        int offset = getCompressionMethodsOffset();
+        ByteBuffer listBuf = ((ByteBuffer) buffer.duplicate().position(offset)
+                .limit(buffer.capacity())).slice();
+        return new CompressionMethodList(listBuf);
+    }
 
-  public boolean hasExtensions()
-  {
-    int offset = getExtensionsOffset();
-    return (offset + 1 < buffer.limit());
-  }
+    public boolean hasExtensions() {
+        int offset = getExtensionsOffset();
+        return (offset + 1 < buffer.limit());
+    }
 
-  public ExtensionList extensions()
-  {
-    int offset = getExtensionsOffset ();
-    if (offset + 1 >= buffer.limit())
-      return null;
-    int len = buffer.getShort(offset) & 0xFFFF;
-    if (len == 0)
-      len = buffer.limit() - offset - 2;
-    ByteBuffer ebuf = ((ByteBuffer) buffer.duplicate().position(offset)
-                       .limit(offset + len + 2)).slice ();
-    return new ExtensionList(ebuf);
-  }
+    public ExtensionList extensions() {
+        int offset = getExtensionsOffset();
+        if (offset + 1 >= buffer.limit())
+            return null;
+        int len = buffer.getShort(offset) & 0xFFFF;
+        if (len == 0)
+            len = buffer.limit() - offset - 2;
+        ByteBuffer ebuf = ((ByteBuffer) buffer.duplicate().position(offset)
+                .limit(offset + len + 2)).slice();
+        return new ExtensionList(ebuf);
+    }
 
-  public int extensionsLength()
-  {
-    if (hasExtensions())
-      return 0;
-    return buffer.getShort(getExtensionsOffset()) & 0xFFFF;
-  }
+    public int extensionsLength() {
+        if (hasExtensions())
+            return 0;
+        return buffer.getShort(getExtensionsOffset()) & 0xFFFF;
+    }
 
-  protected int getCipherSuitesOffset ()
-  {
-    return (SESSID_OFFSET2 + (buffer.get (SESSID_OFFSET) & 0xFF));
-  }
+    protected int getCipherSuitesOffset() {
+        return (SESSID_OFFSET2 + (buffer.get(SESSID_OFFSET) & 0xFF));
+    }
 
-  protected int getCompressionMethodsOffset ()
-  {
-    int csOffset = getCipherSuitesOffset ();
-    int csLen = buffer.getShort (csOffset) & 0xFFFF;
-    return csOffset + csLen + 2;
-  }
+    protected int getCompressionMethodsOffset() {
+        int csOffset = getCipherSuitesOffset();
+        int csLen = buffer.getShort(csOffset) & 0xFFFF;
+        return csOffset + csLen + 2;
+    }
 
-  protected int getExtensionsOffset ()
-  {
-    int cmOffset = getCompressionMethodsOffset ();
-    return (buffer.get (cmOffset) & 0xFF) + cmOffset + 1;
-  }
+    protected int getExtensionsOffset() {
+        int cmOffset = getCompressionMethodsOffset();
+        return (buffer.get(cmOffset) & 0xFF) + cmOffset + 1;
+    }
 
-  public String toString ()
-  {
-    return toString (null);
-  }
+    public String toString() {
+        return toString(null);
+    }
 
-  public String toString (final String prefix)
-  {
-    StringWriter str = new StringWriter ();
-    PrintWriter out = new PrintWriter (str);
-    String subprefix = "  ";
-    if (prefix != null)
-      subprefix += prefix;
-    if (prefix != null)
-      out.print (prefix);
-    out.println ("struct {");
-    if (prefix != null)
-      out.print (prefix);
-    out.print ("  version: ");
-    out.print (version ());
-    out.println (";");
-    out.print (subprefix);
-    out.println ("random:");
-    out.print (random ().toString (subprefix));
-    if (prefix != null)
-      out.print (prefix);
-    out.print ("  sessionId: ");
-    out.print (Util.toHexString (sessionId (), ':'));
-    out.println (";");
-    out.print (subprefix);
-    out.println ("cipher_suites:");
-    out.println (cipherSuites ().toString (subprefix));
-    out.print (subprefix);
-    out.println ("compression_methods:");
-    out.println (compressionMethods ().toString (subprefix));
-    out.print (subprefix);
-    out.print ("extensions: ");
-    ExtensionList el = extensions();
-    out.println (el != null ? el.toString(subprefix+"  ") : "(nil)");
-    if (prefix != null)
-      out.print (prefix);
-    out.print ("} ClientHello;");
-    return str.toString();
-  }
+    public String toString(final String prefix) {
+        StringWriter str = new StringWriter();
+        PrintWriter out = new PrintWriter(str);
+        String subprefix = "  ";
+        if (prefix != null)
+            subprefix += prefix;
+        if (prefix != null)
+            out.print(prefix);
+        out.println("struct {");
+        if (prefix != null)
+            out.print(prefix);
+        out.print("  version: ");
+        out.print(version());
+        out.println(";");
+        out.print(subprefix);
+        out.println("random:");
+        out.print(random().toString(subprefix));
+        if (prefix != null)
+            out.print(prefix);
+        out.print("  sessionId: ");
+        out.print(Util.toHexString(sessionId(), ':'));
+        out.println(";");
+        out.print(subprefix);
+        out.println("cipher_suites:");
+        out.println(cipherSuites().toString(subprefix));
+        out.print(subprefix);
+        out.println("compression_methods:");
+        out.println(compressionMethods().toString(subprefix));
+        out.print(subprefix);
+        out.print("extensions: ");
+        ExtensionList el = extensions();
+        out.println(el != null ? el.toString(subprefix + "  ") : "(nil)");
+        if (prefix != null)
+            out.print(prefix);
+        out.print("} ClientHello;");
+        return str.toString();
+    }
 }
