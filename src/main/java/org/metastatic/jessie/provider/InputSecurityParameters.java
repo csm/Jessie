@@ -327,17 +327,17 @@ public class InputSecurityParameters
 
     public static boolean checkPadding(int recordLength, ByteBuffer fragment, int padlen)
     {
-        int good = 1;
+        int good = 0;
         int totalLength = Math.min(256, recordLength);
         byte[] mask = paddingMask(totalLength, padlen);
         byte[] pad = new byte[totalLength];
         ((ByteBuffer) fragment.duplicate().position(recordLength - totalLength)).get(pad);
         for (int i = 0; i < pad.length; i++)
-            good &= ~(mask[i] & (padlen ^ pad[i]));
+            good |= (mask[i] & 0xFF) & (padlen ^ (pad[i] & 0xFF));
         if (Debug.DEBUG)
             logger.log(Level.FINE, "TLSv1.x padding\n{0}",
                 Util.toHexString(pad));
-        return good == 0;
+        return good != 0;
     }
 
     CipherSuite cipherSuite()

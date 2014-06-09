@@ -22,10 +22,10 @@ public class TestPaddingCheck
         for (int fraglen : asList(16, 64, 128, 192, 256, 320, 384))
         {
             byte[] fragment = new byte[fraglen];
-            Arrays.fill(fragment, (byte) 0xAB);
             List<Long> times = new ArrayList<>();
             for (int padlen = 1; padlen < Math.min(256, fraglen - 1); padlen++)
             {
+                Arrays.fill(fragment, (byte) ~padlen);
                 Arrays.fill(fragment, fraglen - padlen, fraglen, (byte) padlen);
                 ByteBuffer buffer = ByteBuffer.wrap(fragment);
                 long begin = System.nanoTime();
@@ -51,11 +51,11 @@ public class TestPaddingCheck
         for (int fraglen : asList(64, 128, 192, 256, 320, 384))
         {
             byte[] fragment = new byte[fraglen];
-            Arrays.fill(fragment, (byte) 0xAB);
             List<Long> times = new ArrayList<>();
             for (int padlen = 1; padlen < Math.min(256, fraglen - 1); padlen++)
             {
                 for (int bad = 0; bad < padlen; bad++) {
+                    Arrays.fill(fragment, (byte) ~padlen);
                     Arrays.fill(fragment, fraglen - padlen, fraglen, (byte) padlen);
                     fragment[fraglen - padlen + bad] = (byte) ~padlen;
                     ByteBuffer buffer = ByteBuffer.wrap(fragment);
