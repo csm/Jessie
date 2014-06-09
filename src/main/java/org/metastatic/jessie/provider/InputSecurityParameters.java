@@ -38,16 +38,17 @@ exception statement from your version.  */
 
 package org.metastatic.jessie.provider;
 
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.Mac;
-import javax.crypto.ShortBufferException;
+import javax.crypto.*;
+import javax.crypto.spec.GCMParameterSpec;
 import javax.net.ssl.SSLException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -63,6 +64,9 @@ public class InputSecurityParameters
     private final ProtocolVersion version;
     private final CipherSuite suite;
     private long sequence;
+    private SecretKey gcmSecretKey;
+    private int gcmTagLength;
+    private byte[] gcmSalt;
 
     public InputSecurityParameters(final Cipher cipher, final Mac mac,
                                    final Inflater inflater,
@@ -75,6 +79,21 @@ public class InputSecurityParameters
         this.version = version;
         this.suite = suite;
         sequence = 0;
+    }
+
+    public void setGcmSecretKey(SecretKey gcmSecretKey)
+    {
+        this.gcmSecretKey = gcmSecretKey;
+    }
+
+    public void setGcmTagLength(int gcmTagLength)
+    {
+        this.gcmTagLength = gcmTagLength;
+    }
+
+    public void setGcmSalt(byte[] gcmSalt)
+    {
+        this.gcmSalt = gcmSalt.clone();
     }
 
     /**
@@ -127,16 +146,62 @@ public class InputSecurityParameters
     {
         boolean badPadding = false;
         ByteBuffer fragment;
+
         if (cipher != null)
         {
-            ByteBuffer input = record.fragment();
-            fragment = ByteBuffer.allocate(input.remaining());
-            cipher.update(input, fragment);
+            if (suite.cipherAlgorithm() == CipherAlgorithm.AES_GCM)
+            {
+                if (version.compareTo(ProtocolVersion.TLS_1_2) < 0)
+                    throw new SSLException("got AEAD ciphersuite with version < TLSv1.2");
+                ByteBuffer input = record.fragment();
+                byte[] ivBytes = new byte[12]; // FIXME this could be different, this is for AES/GCM suites
+                System.arraycopy(gcmSalt, 0, ivBytes, 0, gcmSalt.length);
+                input.get(ivBytes, gcmSalt.length, ivBytes.length - gcmSalt.length);
+                if (Debug.DEBUG)
+                    logger.log(Level.INFO, "AEAD ivBytes:{0}, record.length:{1} input.remaining:{2}",
+                            new Object[] { Util.toHexString(ivBytes, ':'), record.length(), input.remaining() });
+                try
+                {
+                    GCMParameterSpec nextParameterSpec = new GCMParameterSpec(gcmTagLength, ivBytes);
+                    cipher.init(Cipher.DECRYPT_MODE, gcmSecretKey, nextParameterSpec);
+                }
+                catch (InvalidAlgorithmParameterException | InvalidKeyException e)
+                {
+                    throw new SSLException(e);
+                }
+                byte[] aadBytes = new byte[8 + 1 + 2 + 2];
+                ByteBuffer additionalData = ByteBuffer.wrap(aadBytes); // seq_num + TLSCompressed.type + TLSCompressed.version + TLSCompressed.length
+                additionalData.order(ByteOrder.BIG_ENDIAN);
+                additionalData.putLong(sequence);
+                additionalData.put((byte) record.contentType().getValue());
+                additionalData.put(record.version().getEncoded());
+                additionalData.putShort((short) (record.length() - 8));
+                if (Debug.DEBUG)
+                    logger.log(Level.INFO, "GCM AAD:\n{0}", Util.hexDump(aadBytes));
+                cipher.updateAAD(aadBytes);
+                fragment = ByteBuffer.allocate(input.remaining());
+                try
+                {
+                    cipher.doFinal(input, fragment);
+                }
+                catch (BadPaddingException e)
+                {
+                    if (Debug.DEBUG)
+                        logger.log(Level.INFO, "AEAD decryption failed", e);
+                    badPadding = true;
+                }
+            }
+            else
+            {
+                ByteBuffer input = record.fragment();
+                fragment = ByteBuffer.allocate(input.remaining());
+                cipher.update(input, fragment);
+            }
         } else
             fragment = record.fragment();
 
         if (Debug.DEBUG_DECRYPTION)
-            logger.log(Level.FINE, "decrypted fragment:\n{0}",
+            logger.log(Level.INFO, "decrypted fragment:\n{0}",
                     Util.hexDump((ByteBuffer) fragment.duplicate().position(0), " >> "));
 
         int fragmentLength = record.length();
@@ -302,7 +367,8 @@ public class InputSecurityParameters
                     outputStream.write(buf, 0, l);
                     produced += l;
                 }
-            } else
+            }
+            else
             {
                 int i = offset;
                 while (outbuf.hasRemaining() && i < offset + length)

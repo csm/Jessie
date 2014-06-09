@@ -753,7 +753,7 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                   KeyExchangeAlgorithm.ECDHE_ECDSA,
                   SignatureAlgorithm.ECDSA,
                   MacAlgorithm.SHA256, 16, ECSUITES_MAJOR, MINOR,
-                  "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256", true);
+                  "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256", false);
         }
     }
     public static final class TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384 extends CipherSuite {
@@ -763,7 +763,7 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                   KeyExchangeAlgorithm.ECDHE_ECDSA,
                   SignatureAlgorithm.ECDSA,
                   MacAlgorithm.SHA384, 32, ECSUITES_MAJOR, MINOR,
-                  "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384", true);
+                  "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384", false);
         }
     }
     public static final class TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256 extends CipherSuite {
@@ -773,7 +773,7 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                   KeyExchangeAlgorithm.ECDH_ECDSA,
                   SignatureAlgorithm.ECDSA,
                   MacAlgorithm.SHA256, 16, ECSUITES_MAJOR, MINOR,
-                  "TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256", true);
+                  "TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256", false);
         }
     }
     public static final class TLS_ECDH_ECDSA_WITH_AES_256_GCM_SHA384 extends CipherSuite {
@@ -783,7 +783,7 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                   KeyExchangeAlgorithm.ECDH_ECDSA,
                   SignatureAlgorithm.ECDSA,
                   MacAlgorithm.SHA384, 32, ECSUITES_MAJOR, MINOR,
-                  "TLS_ECDH_ECDSA_WITH_AES_256_GCM_SHA384", true);
+                  "TLS_ECDH_ECDSA_WITH_AES_256_GCM_SHA384", false);
         }
     }
     public static final class TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 extends CipherSuite {
@@ -793,7 +793,7 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                   KeyExchangeAlgorithm.ECDHE_RSA,
                   SignatureAlgorithm.RSA,
                   MacAlgorithm.SHA256, 16, ECSUITES_MAJOR, MINOR,
-                  "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", true);
+                  "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", false);
         }
     }
     public static final class TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 extends CipherSuite {
@@ -803,7 +803,7 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                   KeyExchangeAlgorithm.ECDHE_RSA,
                   SignatureAlgorithm.RSA,
                   MacAlgorithm.SHA384, 32, ECSUITES_MAJOR, MINOR,
-                  TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384.class.getSimpleName(), true);
+                  TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384.class.getSimpleName(), false);
         }
     }
     public static final class TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256 extends CipherSuite {
@@ -813,7 +813,7 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                   KeyExchangeAlgorithm.ECDH_RSA,
                   SignatureAlgorithm.RSA,
                   MacAlgorithm.SHA256, 16, ECSUITES_MAJOR, MINOR,
-                  TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256.class.getSimpleName(), true);
+                  TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256.class.getSimpleName(), false);
         }
     }
     public static final class TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384 extends CipherSuite {
@@ -823,7 +823,7 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                   KeyExchangeAlgorithm.ECDH_RSA,
                   SignatureAlgorithm.RSA,
                   MacAlgorithm.SHA384, 32, ECSUITES_MAJOR, MINOR,
-                  TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384.class.getSimpleName(), true);
+                  TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384.class.getSimpleName(), false);
         }
     }
 
@@ -875,7 +875,8 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
         this.macAlgorithm = macAlgorithm;
         this.exportable = keyLength <= 5;
         this.isStream = (cipherAlgorithm == CipherAlgorithm.NULL
-                || cipherAlgorithm == CipherAlgorithm.RC4);
+                || cipherAlgorithm == CipherAlgorithm.RC4
+                || cipherAlgorithm == CipherAlgorithm.AES_GCM);
         this.isCBCMode = isCBCMode;
         this.keyLength = keyLength;
         this.id = new byte[]{(byte) id1, (byte) id2};
@@ -1219,6 +1220,11 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
 
     public boolean isStreamCipher() {
         return isStream;
+    }
+
+    public boolean isAEAD()
+    {
+        return cipherAlgorithm == CipherAlgorithm.AES_GCM;
     }
 
 //   String getAuthType()
