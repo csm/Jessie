@@ -52,8 +52,8 @@ import org.metastatic.jessie.Session;
 
 public class SessionImpl extends Session {
     static final long serialVersionUID = 8932976607588442485L;
-    CipherSuite suite;
-    ProtocolVersion version;
+    public CipherSuite suite;
+    public ProtocolVersion version;
     byte[] privateDataSalt;
     SealedObject sealedPrivateData;
     MaxFragmentLength maxLength;
@@ -109,31 +109,31 @@ public class SessionImpl extends Session {
         this.sealedPrivateData = so;
     }
 
-    void setApplicationBufferSize(int size) {
+    public void setApplicationBufferSize(int size) {
         applicationBufferSize = size;
     }
 
-    void setRandom(SecureRandom random) {
+    public void setRandom(SecureRandom random) {
         this.random = random;
     }
 
-    void setTruncatedMac(boolean truncatedMac) {
+    public void setTruncatedMac(boolean truncatedMac) {
         this.truncatedMac = truncatedMac;
     }
 
-    void setId(Session.ID id) {
+    public void setId(Session.ID id) {
         this.sessionId = id;
     }
 
-    void setLocalCertificates(java.security.cert.Certificate[] chain) {
+    public void setLocalCertificates(java.security.cert.Certificate[] chain) {
         this.localCerts = chain;
     }
 
-    void setPeerCertificates(java.security.cert.Certificate[] chain) {
+    public void setPeerCertificates(java.security.cert.Certificate[] chain) {
         this.peerCerts = chain;
     }
 
-    void setPeerVerified(boolean peerVerified) {
+    public void setPeerVerified(boolean peerVerified) {
         this.peerVerified = peerVerified;
     }
 

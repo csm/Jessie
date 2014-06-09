@@ -38,17 +38,18 @@ exception statement from your version.  */
 
 package org.metastatic.jessie.provider;
 
-import static org.metastatic.jessie.provider.Handshake.Type.*;
-import static org.metastatic.jessie.provider.KeyExchangeAlgorithm.*;
-import static org.metastatic.jessie.provider.ServerHandshake.State.*;
-
-import org.metastatic.jessie.AbstractSessionContext;
-import org.metastatic.jessie.Session;
-import org.metastatic.jessie.provider.Alert.Description;
-import org.metastatic.jessie.provider.CertificateRequest.ClientCertificateType;
-
+import javax.crypto.*;
+import javax.crypto.interfaces.DHPrivateKey;
+import javax.crypto.interfaces.DHPublicKey;
+import javax.crypto.spec.DHParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import javax.net.ssl.SSLEngineResult.HandshakeStatus;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.X509ExtendedKeyManager;
+import javax.security.auth.x500.X500Principal;
 import java.nio.ByteBuffer;
-
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -60,17 +61,14 @@ import java.util.logging.Level;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
-import javax.crypto.*;
-import javax.crypto.interfaces.DHPrivateKey;
-import javax.crypto.interfaces.DHPublicKey;
-import javax.crypto.spec.DHParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.X509ExtendedKeyManager;
-import javax.net.ssl.SSLEngineResult.HandshakeStatus;
-import javax.security.auth.x500.X500Principal;
+import org.metastatic.jessie.AbstractSessionContext;
+import org.metastatic.jessie.Session;
+import org.metastatic.jessie.provider.Alert.Description;
+import org.metastatic.jessie.provider.CertificateRequest.ClientCertificateType;
+
+import static org.metastatic.jessie.provider.Handshake.Type.*;
+import static org.metastatic.jessie.provider.KeyExchangeAlgorithm.*;
+import static org.metastatic.jessie.provider.ServerHandshake.State.*;
 
 class ServerHandshake extends AbstractHandshake
 {
@@ -548,7 +546,7 @@ class ServerHandshake extends AbstractHandshake
                             deflater = new Deflater();
                         }
                         inParams = new InputSecurityParameters(null, null, inflater,
-                                engine.session(),
+                                engine.session().version,
                                 engine.session().suite);
                         outParams = new OutputSecurityParameters(null, null, deflater,
                                 engine.session(),

@@ -38,30 +38,26 @@ exception statement from your version.  */
 
 package org.metastatic.jessie.provider;
 
-import org.metastatic.jessie.Session;
-import org.metastatic.jessie.SSLRecordHandler;
-
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.ShortBufferException;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLEngineResult;
+import javax.net.ssl.SSLEngineResult.HandshakeStatus;
+import javax.net.ssl.SSLEngineResult.Status;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLSession;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.DataFormatException;
 
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.ShortBufferException;
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLEngineResult;
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.SSLEngineResult.HandshakeStatus;
-import javax.net.ssl.SSLEngineResult.Status;
+import org.metastatic.jessie.SSLRecordHandler;
+import org.metastatic.jessie.Session;
 
 public final class SSLEngineImpl extends SSLEngine
 {
@@ -122,7 +118,7 @@ public final class SSLEngineImpl extends SSLEngine
                     new Object[]{session.id(), contextImpl.random});
 
         // Begin with no encryption.
-        insec = new InputSecurityParameters(null, null, null, session,
+        insec = new InputSecurityParameters(null, null, null, session.version,
                 new CipherSuite.TLS_NULL_WITH_NULL_NULL());
         outsec = new OutputSecurityParameters(null, null, null, session,
                 new CipherSuite.TLS_NULL_WITH_NULL_NULL());

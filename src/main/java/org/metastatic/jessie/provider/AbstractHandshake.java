@@ -649,7 +649,7 @@ public abstract class AbstractHandshake
                     inMac.getAlgorithm()));
             inParams = new InputSecurityParameters(inCipher, inMac,
                     inflater,
-                    engine.session(), s);
+                    engine.session().version, s);
 
             Cipher outCipher = s.cipher();
             Mac outMac = s.mac();

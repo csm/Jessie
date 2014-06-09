@@ -60,19 +60,19 @@ public class InputSecurityParameters
     private final Cipher cipher;
     private final Mac mac;
     private final Inflater inflater;
-    private SessionImpl session;
+    private final ProtocolVersion version;
     private final CipherSuite suite;
     private long sequence;
 
     public InputSecurityParameters(final Cipher cipher, final Mac mac,
                                    final Inflater inflater,
-                                   final SessionImpl session,
+                                   final ProtocolVersion version,
                                    final CipherSuite suite)
     {
         this.cipher = cipher;
         this.mac = mac;
         this.inflater = inflater;
-        this.session = session;
+        this.version = version;
         this.suite = suite;
         sequence = 0;
     }
@@ -152,7 +152,7 @@ public class InputSecurityParameters
             padlen = fragment.get(record.length() - 1) & 0xFF;
             padRemoveLen = padlen + 1;
             if (Debug.DEBUG)
-                logger.log(Level.FINE, "padlen:{0}", padlen);
+                logger.log(Level.INFO, "padlen:{0}", padlen);
 
             // In TLSv1 and later, the padding must be `padlen' copies of the
             // value `padlen'.
@@ -168,7 +168,7 @@ public class InputSecurityParameters
         }
 
         int ivlen = 0;
-        if (session.version.compareTo(ProtocolVersion.TLS_1_1) >= 0
+        if (version.compareTo(ProtocolVersion.TLS_1_1) >= 0
                 && !suite.isStreamCipher())
             ivlen = cipher.getBlockSize();
 
@@ -211,8 +211,6 @@ public class InputSecurityParameters
                 ByteBuffer paddingBuffer = (ByteBuffer) fragment.duplicate().position(fragmentLength);
                 dupeMac.update(paddingBuffer);
                 byte[] x = dupeMac.doFinal();
-                if (Debug.DEBUG)
-                    logger.info("");
             }
             byte[] mac2 = new byte[maclen];
             mac.reset();
@@ -332,11 +330,12 @@ public class InputSecurityParameters
         byte[] mask = paddingMask(totalLength, padlen);
         byte[] pad = new byte[totalLength];
         ((ByteBuffer) fragment.duplicate().position(recordLength - totalLength)).get(pad);
+        //System.out.printf("%02x%n%s%n%s%n", padlen, Util.toHexString(pad), Util.toHexString(mask));
         for (int i = 0; i < pad.length; i++)
             good |= (mask[i] & 0xFF) & (padlen ^ (pad[i] & 0xFF));
         if (Debug.DEBUG)
             logger.log(Level.FINE, "TLSv1.x padding\n{0}",
-                Util.toHexString(pad));
+                    Util.toHexString(pad));
         return good != 0;
     }
 
@@ -353,10 +352,12 @@ public class InputSecurityParameters
      */
     private static byte[] paddingMask(int totalLength, int padlen)
     {
+        if (padlen > totalLength)
+            padlen = totalLength;
         byte[] mask = new byte[totalLength];
-        for (int i = 0; i < totalLength - padlen; i++)
+        for (int i = 0; i < totalLength - padlen - 1; i++)
             mask[i] = 0x00;
-        for (int i = (totalLength - padlen); i < totalLength; i++)
+        for (int i = (totalLength - padlen - 1); i < totalLength; i++)
             mask[i] = (byte) 0xFF;
         return mask;
     }

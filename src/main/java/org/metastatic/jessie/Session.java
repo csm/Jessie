@@ -38,24 +38,16 @@ exception statement from your version.  */
 
 package org.metastatic.jessie;
 
+import javax.crypto.SealedObject;
+import javax.net.ssl.*;
+import javax.security.cert.X509Certificate;
 import java.io.Serializable;
-
 import java.security.Principal;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Set;
-
-import javax.crypto.SealedObject;
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.SSLSessionBindingEvent;
-import javax.net.ssl.SSLSessionBindingListener;
-import javax.net.ssl.SSLSessionContext;
-import javax.security.cert.X509Certificate;
 
 /**
  * A concrete implementation of the {@link SSLSession} interface. This
@@ -78,7 +70,7 @@ public abstract class Session implements SSLSession, Serializable
     protected HashMap<String, Object> values;
     protected boolean valid;
     protected boolean truncatedMac = false;
-    transient protected SecureRandom random;
+    transient public SecureRandom random;
     transient protected SSLSessionContext context;
 
     protected Session()
