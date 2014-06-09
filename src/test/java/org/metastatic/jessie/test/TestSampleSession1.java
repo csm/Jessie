@@ -159,5 +159,64 @@ SSL-Session:
         clientIn.decrypt(record, new ByteBuffer[] { decrypted }, 0, 1);
         handshake = new Handshake(decrypted);
         assertEquals(Handshake.Type.FINISHED, handshake.type());
+        System.out.printf("client finished (decrypted): %s%n", handshake);
+
+        record = new Record(ByteBuffer.wrap(servernewticketBytes));
+        assertEquals(ContentType.HANDSHAKE, record.contentType());
+        // Can't parse the handshake body until we support session tickets
+
+        record = new Record(ByteBuffer.wrap(serverchangeBytes));
+        assertEquals(ContentType.CHANGE_CIPHER_SPEC, record.contentType());
+
+        record = new Record(ByteBuffer.wrap(serverfinishedBytes));
+        assertEquals(ContentType.HANDSHAKE, record.contentType());
+        decrypted = ByteBuffer.allocate(record.length());
+        serverIn.decrypt(record, new ByteBuffer[] { decrypted }, 0, 1);
+        handshake = new Handshake(decrypted);
+        assertEquals(Handshake.Type.FINISHED, handshake.type());
+        System.out.printf("server finished (decrypted): %s%n", handshake);
+
+        record = new Record(ByteBuffer.wrap(clientappbytes1));
+        assertEquals(ContentType.APPLICATION_DATA, record.contentType());
+        decrypted = ByteBuffer.allocate(record.length());
+        int decryptedLen = clientIn.decrypt(record, new ByteBuffer[] { decrypted }, 0, 1);
+        System.out.printf("client app data decrypted %d:%n%s%n", decryptedLen, Util.hexDump((ByteBuffer) decrypted.duplicate().position(0).limit(decryptedLen)));
+
+        record = new Record(ByteBuffer.wrap(clientappbytes2));
+        assertEquals(ContentType.APPLICATION_DATA, record.contentType());
+        decrypted = ByteBuffer.allocate(record.length());
+        decryptedLen = clientIn.decrypt(record, new ByteBuffer[] { decrypted }, 0, 1);
+        System.out.printf("client app data decrypted %d:%n%s%n", decryptedLen, Util.hexDump((ByteBuffer) decrypted.duplicate().position(0).limit(decryptedLen)));
+
+        record = new Record(ByteBuffer.wrap(clientappbytes3));
+        assertEquals(ContentType.APPLICATION_DATA, record.contentType());
+        decrypted = ByteBuffer.allocate(record.length());
+        decryptedLen = clientIn.decrypt(record, new ByteBuffer[] { decrypted }, 0, 1);
+        System.out.printf("client app data decrypted %d:%n%s%n", decryptedLen, Util.hexDump((ByteBuffer) decrypted.duplicate().position(0).limit(decryptedLen)));
+
+        record = new Record(ByteBuffer.wrap(clientappbytes4));
+        assertEquals(ContentType.APPLICATION_DATA, record.contentType());
+        decrypted = ByteBuffer.allocate(record.length());
+        decryptedLen = clientIn.decrypt(record, new ByteBuffer[] { decrypted }, 0, 1);
+        System.out.printf("client app data decrypted %d:%n%s%n", decryptedLen, Util.hexDump((ByteBuffer) decrypted.duplicate().position(0).limit(decryptedLen)));
+
+        record = new Record(ByteBuffer.wrap(serverappbytes1));
+        assertEquals(ContentType.APPLICATION_DATA, record.contentType());
+        decrypted = ByteBuffer.allocate(record.length());
+        decryptedLen = serverIn.decrypt(record, new ByteBuffer[] { decrypted }, 0, 1);
+        System.out.printf("server app data decrypted: %d:%n%s%n", decryptedLen, Util.hexDump((ByteBuffer) decrypted.duplicate().position(0).limit(decryptedLen)));
+
+        record = new Record(ByteBuffer.wrap(serverappbytes2));
+        assertEquals(ContentType.APPLICATION_DATA, record.contentType());
+        decrypted = ByteBuffer.allocate(record.length());
+        decryptedLen = serverIn.decrypt(record, new ByteBuffer[] { decrypted }, 0, 1);
+        System.out.printf("server app data decrypted: %d:%n%s%n", decryptedLen, Util.hexDump((ByteBuffer) decrypted.duplicate().position(0).limit(decryptedLen)));
+
+        record = new Record(ByteBuffer.wrap(clientalertBytes));
+        assertEquals(ContentType.ALERT, record.contentType());
+        decrypted = ByteBuffer.allocate(record.length());
+        decryptedLen = clientIn.decrypt(record, new ByteBuffer[] { decrypted }, 0, 1);
+        Alert alert = new Alert(decrypted);
+        System.out.printf("client alert:%n%s%n", alert);
     }
 }
