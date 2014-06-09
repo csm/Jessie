@@ -113,6 +113,15 @@ public final class Handshake implements Constructed {
     }
 
     /**
+     * The overall size of this handshake message.
+     *
+     * @return The handshake's overall size.
+     */
+    public int size() {
+        return length() + 4;
+    }
+
+    /**
      * Returns the handshake message body. Depending on the handshake
      * type, some implementation of the Body interface is returned.
      *

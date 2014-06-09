@@ -38,24 +38,21 @@ exception statement from your version.  */
 
 package org.metastatic.jessie.provider;
 
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.Mac;
+import javax.crypto.ShortBufferException;
+import javax.net.ssl.SSLException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
-
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
-
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.Mac;
-import javax.crypto.ShortBufferException;
-
-import javax.net.ssl.SSLException;
 
 public class InputSecurityParameters
 {
@@ -157,25 +154,11 @@ public class InputSecurityParameters
             if (Debug.DEBUG)
                 logger.log(Level.FINE, "padlen:{0}", padlen);
 
-            if (record.version() == ProtocolVersion.SSL_3)
-            {
-                // In SSLv3, the padding length must not be larger than
-                // the cipher's block size.
-                if (padlen > cipher.getBlockSize())
-                    badPadding = true;
-            } else if (record.version().compareTo(ProtocolVersion.TLS_1) >= 0)
-            {
-                // In TLSv1 and later, the padding must be `padlen' copies of the
-                // value `padlen'.
-                byte[] pad = new byte[padlen];
-                ((ByteBuffer) fragment.duplicate().position(record.length() - padlen - 1)).get(pad);
-                for (int i = 0; i < pad.length; i++)
-                    if ((pad[i] & 0xFF) != padlen)
-                        badPadding = true;
-                if (Debug.DEBUG)
-                    logger.log(Level.FINE, "TLSv1.x padding\n{0}",
-                            Util.toHexString(pad));
-            }
+            // In TLSv1 and later, the padding must be `padlen' copies of the
+            // value `padlen'.
+            // Here we compare all bytes leading up to the padding, up to
+            // 256 bytes, to try and foil timing attacks.
+            badPadding = checkPadding(record.length(), fragment, padlen);
 
             if (Debug.DEBUG)
                 logger.log(Level.INFO, "padding bad? {0}",
@@ -212,7 +195,25 @@ public class InputSecurityParameters
             ByteBuffer content =
                     (ByteBuffer) fragment.duplicate().position(ivlen).limit(fragmentLength);
             mac.update(content);
+            Mac dupeMac = null;
+            try
+            {
+                dupeMac = (Mac) mac.clone();
+            }
+            catch (CloneNotSupportedException|ClassCastException e)
+            {
+                // ignore, we just won't compute the additional mac of
+                // the padding bytes below.
+            }
+
             byte[] mac1 = mac.doFinal();
+            if (dupeMac != null) {
+                ByteBuffer paddingBuffer = (ByteBuffer) fragment.duplicate().position(fragmentLength);
+                dupeMac.update(paddingBuffer);
+                byte[] x = dupeMac.doFinal();
+                if (Debug.DEBUG)
+                    logger.info("");
+            }
             byte[] mac2 = new byte[maclen];
             mac.reset();
             ((ByteBuffer) fragment.duplicate().position(fragmentLength)).get(mac2);
@@ -324,8 +325,39 @@ public class InputSecurityParameters
         return produced;
     }
 
+    public static boolean checkPadding(int recordLength, ByteBuffer fragment, int padlen)
+    {
+        int good = 1;
+        int totalLength = Math.min(256, recordLength);
+        byte[] mask = paddingMask(totalLength, padlen);
+        byte[] pad = new byte[totalLength];
+        ((ByteBuffer) fragment.duplicate().position(recordLength - totalLength)).get(pad);
+        for (int i = 0; i < pad.length; i++)
+            good &= ~(mask[i] & (padlen ^ pad[i]));
+        if (Debug.DEBUG)
+            logger.log(Level.FINE, "TLSv1.x padding\n{0}",
+                Util.toHexString(pad));
+        return good == 0;
+    }
+
     CipherSuite cipherSuite()
     {
         return suite;
+    }
+
+    /**
+     * Generate a padding mask.
+     *
+     * @param padlen
+     * @return
+     */
+    private static byte[] paddingMask(int totalLength, int padlen)
+    {
+        byte[] mask = new byte[totalLength];
+        for (int i = 0; i < totalLength - padlen; i++)
+            mask[i] = 0x00;
+        for (int i = (totalLength - padlen); i < totalLength; i++)
+            mask[i] = (byte) 0xFF;
+        return mask;
     }
 }

@@ -119,6 +119,15 @@ public class Record {
     }
 
     /**
+     * Return the total size of this record.
+     *
+     * @return The record size.
+     */
+    public int size() {
+        return length() + 5;
+    }
+
+    /**
      * Gets the protocol version field.
      *
      * @return The protocol version field.
