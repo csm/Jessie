@@ -355,9 +355,10 @@ public class InputSecurityParameters
         if (padlen > totalLength)
             padlen = totalLength;
         byte[] mask = new byte[totalLength];
-        for (int i = 0; i < totalLength - padlen - 1; i++)
+        int i;
+        for (i = 0; i < totalLength - padlen - 1; i++)
             mask[i] = 0x00;
-        for (int i = (totalLength - padlen - 1); i < totalLength; i++)
+        for (; i < totalLength; i++)
             mask[i] = (byte) 0xFF;
         return mask;
     }

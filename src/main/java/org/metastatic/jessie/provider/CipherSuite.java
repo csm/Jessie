@@ -664,6 +664,169 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
         }
     }
 
+    // RFC 5289
+    public static final class TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256 extends CipherSuite {
+        public static final int MINOR = 0x23;
+        public TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256() {
+            super(CipherAlgorithm.AES,
+                  KeyExchangeAlgorithm.ECDHE_ECDSA,
+                  SignatureAlgorithm.ECDSA,
+                  MacAlgorithm.SHA256, 16, ECSUITES_MAJOR, MINOR,
+                  TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256.class.getSimpleName(), true);
+        }
+    }
+    public static final class TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384 extends CipherSuite {
+        public static final int MINOR = 0x24;
+        public TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384() {
+            super(CipherAlgorithm.AES,
+                  KeyExchangeAlgorithm.ECDHE_ECDSA,
+                  SignatureAlgorithm.ECDSA,
+                  MacAlgorithm.SHA384, 32, ECSUITES_MAJOR, MINOR,
+                  TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384.class.getSimpleName(), true);
+        }
+    }
+    public static final class TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256 extends CipherSuite {
+        public static final int MINOR = 0x25;
+        public TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256() {
+            super(CipherAlgorithm.AES,
+                  KeyExchangeAlgorithm.ECDH_ECDSA,
+                  SignatureAlgorithm.ECDSA,
+                  MacAlgorithm.SHA256, 16, ECSUITES_MAJOR, MINOR,
+                  TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256.class.getSimpleName(), true);
+        }
+    }
+    public static final class TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA384 extends CipherSuite {
+        public static final int MINOR = 0x26;
+        public TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA384() {
+            super(CipherAlgorithm.AES,
+                  KeyExchangeAlgorithm.ECDH_ECDSA,
+                  SignatureAlgorithm.ECDSA,
+                  MacAlgorithm.SHA384, 32, ECSUITES_MAJOR, MINOR,
+                  TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA384.class.getSimpleName(), true);
+        }
+    }
+    public static final class TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256 extends CipherSuite {
+        public static final int MINOR = 0x27;
+        public TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256() {
+            super(CipherAlgorithm.AES,
+                  KeyExchangeAlgorithm.ECDHE_RSA,
+                  SignatureAlgorithm.RSA,
+                  MacAlgorithm.SHA256, 16, ECSUITES_MAJOR, MINOR,
+                  TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256.class.getName(), true);
+        }
+    }
+    public static final class TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384 extends CipherSuite {
+        public static final int MINOR = 0x28;
+        public TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384() {
+            super(CipherAlgorithm.AES,
+                  KeyExchangeAlgorithm.ECDHE_RSA,
+                  SignatureAlgorithm.RSA,
+                  MacAlgorithm.SHA384, 16, ECSUITES_MAJOR, MINOR,
+                  TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384.class.getSimpleName(), true);
+        }
+    }
+    public static final class TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256 extends CipherSuite {
+        public static final int MINOR = 0x29;
+        public TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256() {
+            super(CipherAlgorithm.AES,
+                  KeyExchangeAlgorithm.ECDH_RSA,
+                  SignatureAlgorithm.RSA,
+                  MacAlgorithm.SHA256, 16, ECSUITES_MAJOR, MINOR,
+                  TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256.class.getSimpleName(), true);
+        }
+    }
+    public static final class TLS_ECDH_RSA_WITH_AES_256_CBC_SHA384 extends CipherSuite {
+        public static final int MINOR = 0x2A;
+        public TLS_ECDH_RSA_WITH_AES_256_CBC_SHA384() {
+            super(CipherAlgorithm.AES,
+                  KeyExchangeAlgorithm.ECDH_RSA,
+                  SignatureAlgorithm.RSA,
+                  MacAlgorithm.SHA384, 32, ECSUITES_MAJOR, MINOR,
+                  TLS_ECDH_RSA_WITH_AES_256_CBC_SHA384.class.getSimpleName(), true);
+        }
+    }
+
+    public static final class TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256 extends CipherSuite {
+        public static final int MINOR = 0x2B;
+        public TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256() {
+            super(CipherAlgorithm.AES_GCM,
+                  KeyExchangeAlgorithm.ECDHE_ECDSA,
+                  SignatureAlgorithm.ECDSA,
+                  MacAlgorithm.SHA256, 16, ECSUITES_MAJOR, MINOR,
+                  "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256", true);
+        }
+    }
+    public static final class TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384 extends CipherSuite {
+        public static final int MINOR = 0x2C;
+        public TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384() {
+            super(CipherAlgorithm.AES_GCM,
+                  KeyExchangeAlgorithm.ECDHE_ECDSA,
+                  SignatureAlgorithm.ECDSA,
+                  MacAlgorithm.SHA384, 32, ECSUITES_MAJOR, MINOR,
+                  "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384", true);
+        }
+    }
+    public static final class TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256 extends CipherSuite {
+        public static final int MINOR = 0x2D;
+        public TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256() {
+            super(CipherAlgorithm.AES_GCM,
+                  KeyExchangeAlgorithm.ECDH_ECDSA,
+                  SignatureAlgorithm.ECDSA,
+                  MacAlgorithm.SHA256, 16, ECSUITES_MAJOR, MINOR,
+                  "TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256", true);
+        }
+    }
+    public static final class TLS_ECDH_ECDSA_WITH_AES_256_GCM_SHA384 extends CipherSuite {
+        public static final int MINOR = 0x2E;
+        public TLS_ECDH_ECDSA_WITH_AES_256_GCM_SHA384() {
+            super(CipherAlgorithm.AES_GCM,
+                  KeyExchangeAlgorithm.ECDH_ECDSA,
+                  SignatureAlgorithm.ECDSA,
+                  MacAlgorithm.SHA384, 32, ECSUITES_MAJOR, MINOR,
+                  "TLS_ECDH_ECDSA_WITH_AES_256_GCM_SHA384", true);
+        }
+    }
+    public static final class TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 extends CipherSuite {
+        public static final int MINOR = 0x2F;
+        public TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256() {
+            super(CipherAlgorithm.AES_GCM,
+                  KeyExchangeAlgorithm.ECDHE_RSA,
+                  SignatureAlgorithm.RSA,
+                  MacAlgorithm.SHA256, 16, ECSUITES_MAJOR, MINOR,
+                  "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", true);
+        }
+    }
+    public static final class TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 extends CipherSuite {
+        public static final int MINOR = 0x30;
+        public TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384() {
+            super(CipherAlgorithm.AES_GCM,
+                  KeyExchangeAlgorithm.ECDHE_RSA,
+                  SignatureAlgorithm.RSA,
+                  MacAlgorithm.SHA384, 32, ECSUITES_MAJOR, MINOR,
+                  TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384.class.getSimpleName(), true);
+        }
+    }
+    public static final class TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256 extends CipherSuite {
+        public static final int MINOR = 0x31;
+        public TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256() {
+            super(CipherAlgorithm.AES_GCM,
+                  KeyExchangeAlgorithm.ECDH_RSA,
+                  SignatureAlgorithm.RSA,
+                  MacAlgorithm.SHA256, 16, ECSUITES_MAJOR, MINOR,
+                  TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256.class.getSimpleName(), true);
+        }
+    }
+    public static final class TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384 extends CipherSuite {
+        public static final int MINOR = 0x32;
+        public TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384() {
+            super(CipherAlgorithm.AES_GCM,
+                  KeyExchangeAlgorithm.ECDH_RSA,
+                  SignatureAlgorithm.RSA,
+                  MacAlgorithm.SHA384, 32, ECSUITES_MAJOR, MINOR,
+                  TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384.class.getSimpleName(), true);
+        }
+    }
+
 
     private final CipherAlgorithm cipherAlgorithm;
     private final KeyExchangeAlgorithm keyExchangeAlgorithm;
@@ -777,7 +940,7 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
     }
 
     @Override
-    public Mac mac() throws NoSuchAlgorithmException
+    public Mac mac(SSLProtocolVersion version) throws NoSuchAlgorithmException
     {
         if (macAlgorithm == null)
             throw new NoSuchAlgorithmException(toString() + ": unresolved cipher suite");
@@ -791,12 +954,14 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                 return Mac.getInstance("HmacSHA1");
             case SHA256:
                 return Mac.getInstance("HmacSHA256");
+            case SHA384:
+                return Mac.getInstance("HmacSHA384");
         }
         throw new NoSuchAlgorithmException("unknown MAC algorithm");
     }
 
     @Override
-    public Cipher cipher() throws NoSuchAlgorithmException, NoSuchPaddingException
+    public Cipher cipher(SSLProtocolVersion version) throws NoSuchAlgorithmException, NoSuchPaddingException
     {
         if (cipherAlgorithm == null)
             throw new NoSuchAlgorithmException(toString() + ": unresolved cipher suite");
@@ -806,6 +971,8 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                 return null;
             case AES:
                 return Cipher.getInstance("AES/CBC/NoPadding");
+            case AES_GCM:
+                return Cipher.getInstance("AES/GCM/NoPadding");
             case DES:
                 throw new NoSuchAlgorithmException("DES cipher suites are disabled");
             case DESede:
@@ -823,13 +990,18 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
     {
         switch (version)
         {
-            case TLSv1_2: return KeyGenerator.getInstance("P_SHA256");
+            case TLSv1_2:
+            {
+                if (macAlgorithm() == MacAlgorithm.SHA384)
+                    return KeyGenerator.getInstance("P_SHA384");
+                return KeyGenerator.getInstance("P_SHA256");
+            }
             default: return KeyGenerator.getInstance("TLS_PRF");
         }
     }
 
     @Override
-    public Signature signature() throws NoSuchAlgorithmException {
+    public Signature signature(SSLProtocolVersion version) throws NoSuchAlgorithmException {
         switch (signatureAlgorithm)
         {
             case ANONYMOUS:
@@ -845,7 +1017,7 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
     }
 
     @Override
-    public KeyAgreement keyAgreement() throws NoSuchAlgorithmException {
+    public KeyAgreement keyAgreement(SSLProtocolVersion version) throws NoSuchAlgorithmException {
         return null;
     }
 
@@ -996,6 +1168,38 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
                     return new TLS_ECDH_anon_WITH_AES_128_CBC_SHA();
                 case TLS_ECDH_anon_WITH_AES_256_CBC_SHA.MINOR:
                     return new TLS_ECDH_anon_WITH_AES_256_CBC_SHA();
+                case TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256.MINOR:
+                    return new TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256();
+                case TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384.MINOR:
+                    return new TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384();
+                case TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256.MINOR:
+                    return new TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256();
+                case TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA384.MINOR:
+                    return new TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA384();
+                case TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256.MINOR:
+                    return new TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256();
+                case TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384.MINOR:
+                    return new TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384();
+                case TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256.MINOR:
+                    return new TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256();
+                case TLS_ECDH_RSA_WITH_AES_256_CBC_SHA384.MINOR:
+                    return new TLS_ECDH_RSA_WITH_AES_256_CBC_SHA384();
+                case TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256.MINOR:
+                    return new TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256();
+                case TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384.MINOR:
+                    return new TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384();
+                case TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256.MINOR:
+                    return new TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256();
+                case TLS_ECDH_ECDSA_WITH_AES_256_GCM_SHA384.MINOR:
+                    return new TLS_ECDH_ECDSA_WITH_AES_256_GCM_SHA384();
+                case TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256.MINOR:
+                    return new TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256();
+                case TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384.MINOR:
+                    return new TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384();
+                case TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256.MINOR:
+                    return new TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256();
+                case TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384.MINOR:
+                    return new TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384();
             }
         }
         return this;

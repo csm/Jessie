@@ -39,6 +39,8 @@ exception statement from your version.  */
 
 package org.metastatic.jessie.provider;
 
+import org.metastatic.jessie.SSLProtocolVersion;
+
 import javax.crypto.*;
 import javax.crypto.interfaces.DHPrivateKey;
 import javax.crypto.interfaces.DHPublicKey;
@@ -636,8 +638,9 @@ public abstract class AbstractHandshake
         try
         {
             CipherSuite s = engine.session().suite;
-            Cipher inCipher = s.cipher();
-            Mac inMac = s.mac();
+            final SSLProtocolVersion protocolVersion = engine.session().version.protocolVersion();
+            Cipher inCipher = s.cipher(protocolVersion);
+            Mac inMac = s.mac(protocolVersion);
             Inflater inflater = (compression == CompressionMethod.ZLIB
                     ? new Inflater() : null);
             inCipher.init(Cipher.DECRYPT_MODE,
@@ -651,8 +654,8 @@ public abstract class AbstractHandshake
                     inflater,
                     engine.session().version, s);
 
-            Cipher outCipher = s.cipher();
-            Mac outMac = s.mac();
+            Cipher outCipher = s.cipher(protocolVersion);
+            Mac outMac = s.mac(protocolVersion);
             Deflater deflater = (compression == CompressionMethod.ZLIB
                     ? new Deflater() : null);
             outCipher.init(Cipher.ENCRYPT_MODE,

@@ -43,5 +43,5 @@ package org.metastatic.jessie.provider;
  */
 public enum MacAlgorithm
 {
-  NULL, MD5, SHA, SHA256;
+  NULL, MD5, SHA, SHA256, SHA384;
 }

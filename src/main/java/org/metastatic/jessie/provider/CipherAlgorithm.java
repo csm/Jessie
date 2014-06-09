@@ -43,5 +43,5 @@ package org.metastatic.jessie.provider;
  */
 public enum CipherAlgorithm
 {
-  NULL, RC4, DES, DESede, CAST5, AES
+  NULL, RC4, DES, DESede, CAST5, AES, AES_GCM
 }

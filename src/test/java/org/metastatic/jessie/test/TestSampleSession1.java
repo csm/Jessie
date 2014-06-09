@@ -10,6 +10,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.junit.Test;
+import org.metastatic.jessie.SSLProtocolVersion;
 import org.metastatic.jessie.provider.*;
 
 import static org.junit.Assert.assertEquals;
@@ -18,7 +19,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class TestSampleSession1
 {
-    // openssl s_client -cipher DHE-RSA-AES256-SHA:DHE-DSS-AES256-SHA:AES256-SHA:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA:AES128-SHA -connect www.google.com:443
+    // openssl s_client -cipher DHE-RSA-AES256-SHA:DHE-DSS-AES256-SHA:AES256-SHA:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA:AES128-SHA -connect www.google.com:443 -tls1
     // Then, type in "GET /x HTTP/1.0\n\n"
 
     /*
@@ -79,33 +80,46 @@ public class TestSampleSession1
         KeyGenerator prf = new TestableKeyGenerator(new TLSPRFKeyGeneratorImpl(), jessie, "TLS_PRF");
         byte[] KEY_EXPANSION = new byte[]{107, 101, 121, 32, 101, 120, 112,
                 97, 110, 115, 105, 111, 110};
+        final Random clientRandom = clientHello.random();
+        final Random serverRandom = serverHello.random();
         byte[] seed = new byte[KEY_EXPANSION.length
-                + clientHello.random().length()
-                + serverHello.random().length()];
+                + clientRandom.length()
+                + serverRandom.length()];
         System.arraycopy(KEY_EXPANSION, 0, seed, 0, KEY_EXPANSION.length);
-        serverHello.random().buffer().get(seed, KEY_EXPANSION.length,
-                serverHello.random().length());
-        clientHello.random().buffer().get(seed, (KEY_EXPANSION.length
-                        + clientHello.random().length()),
-                clientHello.random().length()
+        serverRandom.buffer().get(seed, KEY_EXPANSION.length,
+                serverRandom.length());
+        clientRandom.buffer().get(seed, (KEY_EXPANSION.length
+                        + clientRandom.length()),
+                clientRandom.length()
         );
         prf.init(new TLSKeyGeneratorParameterSpec("TLS_PRF", seed, masterSecret,
-                16, 16, 16));
+                 suite.keyLength(), 20, 16));
         TLSSessionKeys keys = (TLSSessionKeys) prf.generateKey();
+        System.out.printf("expanded keys:%nclient_write_mac: %s%nclient_write_key: %s%n client_write_iv: %s%n" +
+                          "server_write_mac: %s%nserver_write_key: %s%n server_write_iv: %s%n",
+                          Util.toHexString(keys.getClientWriteMACKey(), ':'),
+                          Util.toHexString(keys.getClientWriteKey(), ':'),
+                          Util.toHexString(keys.getClientWriteIV(), ':'),
+                          Util.toHexString(keys.getServerWriteMACKey(), ':'),
+                          Util.toHexString(keys.getServerWriteKey(), ':'),
+                          Util.toHexString(keys.getServerWriteIV(), ':'));
 
-        Cipher clientCipher = suite.cipher();
+        SSLProtocolVersion protocolVersion = serverHello.version().protocolVersion();
+        Cipher clientCipher = suite.cipher(protocolVersion);
         clientCipher.init(Cipher.DECRYPT_MODE,
                 new SecretKeySpec(keys.getClientWriteKey(), suite.cipherAlgorithm().toString()),
                 new IvParameterSpec(keys.getClientWriteIV()));
-        Mac clientMac = suite.mac();
+        Mac clientMac = suite.mac(protocolVersion);
         clientMac.init(new SecretKeySpec(keys.getClientWriteMACKey(), clientMac.getAlgorithm()));
+        System.out.printf("client cipher: %s client mac: %s%n", clientCipher.getAlgorithm(), clientMac.getAlgorithm());
 
-        Cipher serverCipher = suite.cipher();
+        Cipher serverCipher = suite.cipher(protocolVersion);
         serverCipher.init(Cipher.DECRYPT_MODE,
                 new SecretKeySpec(keys.getServerWriteKey(), suite.cipherAlgorithm().toString()),
                 new IvParameterSpec(keys.getServerWriteIV()));
-        Mac serverMac = suite.mac();
+        Mac serverMac = suite.mac(protocolVersion);
         serverMac.init(new SecretKeySpec(keys.getServerWriteMACKey(), serverMac.getAlgorithm()));
+        System.out.printf("server cipher: %s server mac: %s", serverCipher.getAlgorithm(), serverMac.getAlgorithm());
 
         InputSecurityParameters serverIn = new InputSecurityParameters(serverCipher, serverMac, null, serverHello.version(), suite);
         InputSecurityParameters clientIn = new InputSecurityParameters(clientCipher, clientMac, null, serverHello.version(), suite);

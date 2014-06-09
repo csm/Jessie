@@ -135,13 +135,13 @@ public abstract class SSLCipherSuite
         return version;
     }
 
-    public abstract Cipher cipher() throws NoSuchAlgorithmException, NoSuchPaddingException;
+    public abstract Cipher cipher(SSLProtocolVersion version) throws NoSuchAlgorithmException, NoSuchPaddingException;
 
-    public abstract Mac mac() throws NoSuchAlgorithmException;
+    public abstract Mac mac(SSLProtocolVersion version) throws NoSuchAlgorithmException;
 
-    public abstract Signature signature() throws NoSuchAlgorithmException;
+    public abstract Signature signature(SSLProtocolVersion version) throws NoSuchAlgorithmException;
 
-    public abstract KeyAgreement keyAgreement() throws NoSuchAlgorithmException;
+    public abstract KeyAgreement keyAgreement(SSLProtocolVersion version) throws NoSuchAlgorithmException;
 
     public abstract KeyGenerator prf(SSLProtocolVersion version) throws NoSuchAlgorithmException;
 
