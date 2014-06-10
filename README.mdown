@@ -12,3 +12,7 @@ The current plan, in no particular order:
 * Kick out SSLv3 support, make TLSv1, TLSv1.1, and TLSv1.2 support the focus.
 * Create a test suite for the underlying components.
 * Bring in/improve other useful cipher suites not present in the Oracle JSSE.
+
+Naturally, since this is a piece of cryptographic software, you probably should not be using it, at least not yet.
+Cryptographic protocols like TLS are notoriously difficult to make correct, and even though I am trying to
+make Jessie secure against known attacks against TLS and its implementations, it's not there yet.

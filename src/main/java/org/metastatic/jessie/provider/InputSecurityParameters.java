@@ -197,20 +197,15 @@ public class InputSecurityParameters
                 {
                     throw new SSLException(e);
                 }
-                byte[] aadBytes = new byte[8 + 1 + 2 + 2];
-                ByteBuffer additionalData = ByteBuffer.wrap(aadBytes); // seq_num + TLSCompressed.type + TLSCompressed.version + TLSCompressed.length
-                additionalData.order(ByteOrder.BIG_ENDIAN);
-                additionalData.putLong(sequence);
-                additionalData.put((byte) record.contentType().getValue());
-                additionalData.put(record.version().getEncoded());
-                additionalData.putShort((short) (record.length() - 8));
+                ByteBuffer aadBuffer = authenticator(sequence, record.contentType(), record.version(),
+                        (short) (record.length() - 8));
                 if (Debug.DEBUG)
-                    logger.log(Level.INFO, "GCM AAD:\n{0}", Util.hexDump(aadBytes));
-                cipher.updateAAD(aadBytes);
+                    logger.log(Level.INFO, "GCM AAD:\n{0}", Util.hexDump(aadBuffer));
+                cipher.updateAAD(aadBuffer);
                 fragment = ByteBuffer.allocate(input.remaining());
                 try
                 {
-                    cipher.doFinal(input, fragment);
+                    cipher.doFinal((ByteBuffer) input.duplicate().position(8), fragment);
                 }
                 catch (BadPaddingException e)
                 {
