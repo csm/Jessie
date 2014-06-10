@@ -638,37 +638,68 @@ public abstract class AbstractHandshake
         try
         {
             CipherSuite s = engine.session().suite;
-            final SSLProtocolVersion protocolVersion = engine.session().version.protocolVersion();
+            ProtocolVersion version = engine.session().version;
+            final SSLProtocolVersion protocolVersion = version.protocolVersion();
             Cipher inCipher = s.cipher(protocolVersion);
             Mac inMac = s.mac(protocolVersion);
             Inflater inflater = (compression == CompressionMethod.ZLIB
                     ? new Inflater() : null);
-            inCipher.init(Cipher.DECRYPT_MODE,
-                    new SecretKeySpec(isClient ? keys.getServerWriteKey() : keys.getClientWriteKey(),
-                            s.cipherAlgorithm().toString()),
-                    new IvParameterSpec(isClient ? keys.getServerWriteIV() : keys.getClientWriteIV())
-            );
-            inMac.init(new SecretKeySpec(isClient ? keys.getServerWriteMACKey() : keys.getClientWriteMACKey(),
-                    inMac.getAlgorithm()));
-            inParams = new InputSecurityParameters(inCipher, inMac,
-                    inflater,
-                    engine.session().version, s);
+            SecretKeySpec readKey = new SecretKeySpec(isClient ? keys.getServerWriteKey() : keys.getClientWriteKey(),
+                    s.cipherAlgorithm().toString());
+            byte[] readIvBytes = isClient ? keys.getServerWriteIV() : keys.getClientWriteIV();
+            if (version.compareTo(ProtocolVersion.TLS_1_1) < 0
+                || !s.isCBCMode())
+            {
+                inCipher.init(Cipher.DECRYPT_MODE, readKey, new IvParameterSpec(readIvBytes));
+            }
+            if (inMac != null)
+            {
+                inMac.init(new SecretKeySpec(isClient ? keys.getServerWriteMACKey() : keys.getClientWriteMACKey(),
+                           inMac.getAlgorithm()));
+            }
+            if (s.cipherAlgorithm() == CipherAlgorithm.AES_GCM)
+            {
+                inParams = new InputSecurityParameters(inCipher, inflater, version, s,
+                                                       readKey, readIvBytes, 128);
+            }
+            else if (version.compareTo(ProtocolVersion.TLS_1_1) >= 0 && s.isCBCMode())
+            {
+                inParams = new InputSecurityParameters(inCipher, inMac, inflater, version, s, readKey);
+            }
+            else
+            {
+                inParams = new InputSecurityParameters(inCipher, inMac, inflater, version, s);
+            }
 
             Cipher outCipher = s.cipher(protocolVersion);
             Mac outMac = s.mac(protocolVersion);
-            Deflater deflater = (compression == CompressionMethod.ZLIB
-                    ? new Deflater() : null);
-            outCipher.init(Cipher.ENCRYPT_MODE,
-                    new SecretKeySpec(isClient ? keys.getClientWriteKey() : keys.getServerWriteKey(),
-                            s.cipherAlgorithm().toString()),
-                    new IvParameterSpec(isClient ? keys.getClientWriteIV() : keys.getServerWriteIV())
-            );
-            outMac.init(new SecretKeySpec(isClient ? keys.getClientWriteMACKey() : keys.getServerWriteMACKey(),
-                    outMac.getAlgorithm()));
-            outParams = new OutputSecurityParameters(outCipher, outMac,
-                    deflater,
-                    engine.session(), s);
-        } catch (InvalidAlgorithmParameterException | InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException iape)
+            Deflater deflater = (compression == CompressionMethod.ZLIB ? new Deflater() : null);
+            SecretKeySpec writeKey = new SecretKeySpec(isClient ? keys.getClientWriteKey() : keys.getServerWriteKey(),
+                    s.cipherAlgorithm().toString());
+            byte[] writeIvBytes = isClient ? keys.getClientWriteIV() : keys.getServerWriteIV();
+            if (version.compareTo(ProtocolVersion.TLS_1_1) < 0 || !s.isCBCMode())
+            {
+                outCipher.init(Cipher.ENCRYPT_MODE, writeKey, new IvParameterSpec(writeIvBytes));
+            }
+            if (outMac != null)
+            {
+                outMac.init(new SecretKeySpec(isClient ? keys.getClientWriteMACKey() : keys.getServerWriteMACKey(),
+                            outMac.getAlgorithm()));
+            }
+            if (s.cipherAlgorithm() == CipherAlgorithm.AES_GCM)
+            {
+                outParams = new OutputSecurityParameters(outCipher, deflater, engine.session(), s, writeKey, writeIvBytes, 128);
+            }
+            else if (version.compareTo(ProtocolVersion.TLS_1_1) >= 0 && s.isCBCMode())
+            {
+                outParams = new OutputSecurityParameters(outCipher, outMac, deflater, engine.session(), s, writeKey);
+            }
+            else
+            {
+                outParams = new OutputSecurityParameters(outCipher, outMac, deflater, engine.session(), s);
+            }
+        }
+        catch (InvalidAlgorithmParameterException | InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException iape)
         {
             throw new SSLException(iape);
         }
