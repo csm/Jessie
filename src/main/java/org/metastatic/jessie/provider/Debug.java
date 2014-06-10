@@ -62,7 +62,7 @@ public final class Debug
      * log potentially-sensitive information (i.e., decrypted messages), only
      * enable this in debug scenarios.
      */
-    public static final boolean DEBUG_DECRYPTION = true;
+    public static final boolean DEBUG_DECRYPTION = false;
 
-    public static final boolean DEBUG_ENCRYPTION = true;
+    public static final boolean DEBUG_ENCRYPTION = false;
 }
