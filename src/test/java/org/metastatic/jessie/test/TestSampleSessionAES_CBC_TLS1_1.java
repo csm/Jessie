@@ -178,7 +178,8 @@ SSL-Session:
         prf.init(new TLSKeyGeneratorParameterSpec("TLS_PRF", seed, masterSecret,
                  suite.keyLength(), 20, 0));
         TLSSessionKeys keys = (TLSSessionKeys) prf.generateKey();
-        System.out.printf("session keys:%nclient_write_key: %s%nclient_write_mac: %s%nserver_write_key: %s%nserver_write_mac: %s%nivs:c:%s s:%s%n",
+        if (TestDebug.DEBUG)
+            System.out.printf("session keys:%nclient_write_key: %s%nclient_write_mac: %s%nserver_write_key: %s%nserver_write_mac: %s%nivs:c:%s s:%s%n",
                 Util.toHexString(keys.getClientWriteKey()),
                 Util.toHexString(keys.getClientWriteMACKey()),
                 Util.toHexString(keys.getServerWriteKey()),
@@ -236,6 +237,7 @@ SSL-Session:
         decrypted = ByteBuffer.allocate(record.length());
         clientIn.decrypt(record, new ByteBuffer[]{decrypted}, 0, 1);
         Alert alert = new Alert(decrypted);
-        System.out.println(alert);
+        if (TestDebug.DEBUG)
+            System.out.println(alert);
     }
 }

@@ -109,7 +109,8 @@ SSL-Session:
         prf.init(new TLSKeyGeneratorParameterSpec("TLS_PRF", seed, masterSecret,
                  suite.keyLength(), 20, 16));
         TLSSessionKeys keys = (TLSSessionKeys) prf.generateKey();
-        System.out.printf("expanded keys:%nclient_write_mac: %s%nclient_write_key: %s%n client_write_iv: %s%n" +
+        if (TestDebug.DEBUG)
+            System.out.printf("expanded keys:%nclient_write_mac: %s%nclient_write_key: %s%n client_write_iv: %s%n" +
                           "server_write_mac: %s%nserver_write_key: %s%n server_write_iv: %s%n",
                           Util.toHexString(keys.getClientWriteMACKey(), ':'),
                           Util.toHexString(keys.getClientWriteKey(), ':'),
@@ -125,7 +126,8 @@ SSL-Session:
                 new IvParameterSpec(keys.getClientWriteIV()));
         Mac clientMac = suite.mac(protocolVersion);
         clientMac.init(new SecretKeySpec(keys.getClientWriteMACKey(), clientMac.getAlgorithm()));
-        System.out.printf("client cipher: %s client mac: %s%n", clientCipher.getAlgorithm(), clientMac.getAlgorithm());
+        if (TestDebug.DEBUG)
+            System.out.printf("client cipher: %s client mac: %s%n", clientCipher.getAlgorithm(), clientMac.getAlgorithm());
 
         Cipher serverCipher = suite.cipher(protocolVersion);
         serverCipher.init(Cipher.DECRYPT_MODE,
@@ -133,7 +135,8 @@ SSL-Session:
                 new IvParameterSpec(keys.getServerWriteIV()));
         Mac serverMac = suite.mac(protocolVersion);
         serverMac.init(new SecretKeySpec(keys.getServerWriteMACKey(), serverMac.getAlgorithm()));
-        System.out.printf("server cipher: %s server mac: %s", serverCipher.getAlgorithm(), serverMac.getAlgorithm());
+        if (TestDebug.DEBUG)
+            System.out.printf("server cipher: %s server mac: %s", serverCipher.getAlgorithm(), serverMac.getAlgorithm());
 
         InputSecurityParameters serverIn = new InputSecurityParameters(serverCipher, serverMac, null, serverHello.version(), suite);
         InputSecurityParameters clientIn = new InputSecurityParameters(clientCipher, clientMac, null, serverHello.version(), suite);
@@ -159,7 +162,8 @@ SSL-Session:
         clientIn.decrypt(record, new ByteBuffer[] { decrypted }, 0, 1);
         handshake = new Handshake(decrypted);
         assertEquals(Handshake.Type.FINISHED, handshake.type());
-        System.out.printf("client finished (decrypted): %s%n", handshake);
+        if (TestDebug.DEBUG)
+            System.out.printf("client finished (decrypted): %s%n", handshake);
 
         record = new Record(ByteBuffer.wrap(servernewticketBytes));
         assertEquals(ContentType.HANDSHAKE, record.contentType());
@@ -174,49 +178,57 @@ SSL-Session:
         serverIn.decrypt(record, new ByteBuffer[] { decrypted }, 0, 1);
         handshake = new Handshake(decrypted);
         assertEquals(Handshake.Type.FINISHED, handshake.type());
-        System.out.printf("server finished (decrypted): %s%n", handshake);
+        if (TestDebug.DEBUG)
+            System.out.printf("server finished (decrypted): %s%n", handshake);
 
         record = new Record(ByteBuffer.wrap(clientappbytes1));
         assertEquals(ContentType.APPLICATION_DATA, record.contentType());
         decrypted = ByteBuffer.allocate(record.length());
         int decryptedLen = clientIn.decrypt(record, new ByteBuffer[] { decrypted }, 0, 1);
-        System.out.printf("client app data decrypted %d:%n%s%n", decryptedLen, Util.hexDump((ByteBuffer) decrypted.duplicate().position(0).limit(decryptedLen)));
+        if (TestDebug.DEBUG)
+            System.out.printf("client app data decrypted %d:%n%s%n", decryptedLen, Util.hexDump((ByteBuffer) decrypted.duplicate().position(0).limit(decryptedLen)));
 
         record = new Record(ByteBuffer.wrap(clientappbytes2));
         assertEquals(ContentType.APPLICATION_DATA, record.contentType());
         decrypted = ByteBuffer.allocate(record.length());
         decryptedLen = clientIn.decrypt(record, new ByteBuffer[] { decrypted }, 0, 1);
-        System.out.printf("client app data decrypted %d:%n%s%n", decryptedLen, Util.hexDump((ByteBuffer) decrypted.duplicate().position(0).limit(decryptedLen)));
+        if (TestDebug.DEBUG)
+            System.out.printf("client app data decrypted %d:%n%s%n", decryptedLen, Util.hexDump((ByteBuffer) decrypted.duplicate().position(0).limit(decryptedLen)));
 
         record = new Record(ByteBuffer.wrap(clientappbytes3));
         assertEquals(ContentType.APPLICATION_DATA, record.contentType());
         decrypted = ByteBuffer.allocate(record.length());
         decryptedLen = clientIn.decrypt(record, new ByteBuffer[] { decrypted }, 0, 1);
-        System.out.printf("client app data decrypted %d:%n%s%n", decryptedLen, Util.hexDump((ByteBuffer) decrypted.duplicate().position(0).limit(decryptedLen)));
+        if (TestDebug.DEBUG)
+            System.out.printf("client app data decrypted %d:%n%s%n", decryptedLen, Util.hexDump((ByteBuffer) decrypted.duplicate().position(0).limit(decryptedLen)));
 
         record = new Record(ByteBuffer.wrap(clientappbytes4));
         assertEquals(ContentType.APPLICATION_DATA, record.contentType());
         decrypted = ByteBuffer.allocate(record.length());
         decryptedLen = clientIn.decrypt(record, new ByteBuffer[] { decrypted }, 0, 1);
-        System.out.printf("client app data decrypted %d:%n%s%n", decryptedLen, Util.hexDump((ByteBuffer) decrypted.duplicate().position(0).limit(decryptedLen)));
+        if (TestDebug.DEBUG)
+            System.out.printf("client app data decrypted %d:%n%s%n", decryptedLen, Util.hexDump((ByteBuffer) decrypted.duplicate().position(0).limit(decryptedLen)));
 
         record = new Record(ByteBuffer.wrap(serverappbytes1));
         assertEquals(ContentType.APPLICATION_DATA, record.contentType());
         decrypted = ByteBuffer.allocate(record.length());
         decryptedLen = serverIn.decrypt(record, new ByteBuffer[] { decrypted }, 0, 1);
-        System.out.printf("server app data decrypted: %d:%n%s%n", decryptedLen, Util.hexDump((ByteBuffer) decrypted.duplicate().position(0).limit(decryptedLen)));
+        if (TestDebug.DEBUG)
+            System.out.printf("server app data decrypted: %d:%n%s%n", decryptedLen, Util.hexDump((ByteBuffer) decrypted.duplicate().position(0).limit(decryptedLen)));
 
         record = new Record(ByteBuffer.wrap(serverappbytes2));
         assertEquals(ContentType.APPLICATION_DATA, record.contentType());
         decrypted = ByteBuffer.allocate(record.length());
         decryptedLen = serverIn.decrypt(record, new ByteBuffer[] { decrypted }, 0, 1);
-        System.out.printf("server app data decrypted: %d:%n%s%n", decryptedLen, Util.hexDump((ByteBuffer) decrypted.duplicate().position(0).limit(decryptedLen)));
+        if (TestDebug.DEBUG)
+            System.out.printf("server app data decrypted: %d:%n%s%n", decryptedLen, Util.hexDump((ByteBuffer) decrypted.duplicate().position(0).limit(decryptedLen)));
 
         record = new Record(ByteBuffer.wrap(clientalertBytes));
         assertEquals(ContentType.ALERT, record.contentType());
         decrypted = ByteBuffer.allocate(record.length());
         decryptedLen = clientIn.decrypt(record, new ByteBuffer[] { decrypted }, 0, 1);
         Alert alert = new Alert(decrypted);
-        System.out.printf("client alert:%n%s%n", alert);
+        if (TestDebug.DEBUG)
+            System.out.printf("client alert:%n%s%n", alert);
     }
 }

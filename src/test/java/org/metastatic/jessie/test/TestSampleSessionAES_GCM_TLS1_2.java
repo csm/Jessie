@@ -151,7 +151,8 @@ SSL-Session:
         prf.init(new TLSKeyGeneratorParameterSpec("P_SHA256", seed, masterSecret,
                 suite.keyLength(), 0, 4));
         TLSSessionKeys keys = (TLSSessionKeys) prf.generateKey();
-        System.out.printf("session keys:%nclient_write_key: %s%n client_write_iv: %s%nserver_write_key: %s%n server_write_iv: %s%n",
+        if (TestDebug.DEBUG)
+            System.out.printf("session keys:%nclient_write_key: %s%n client_write_iv: %s%nserver_write_key: %s%n server_write_iv: %s%n",
                 Util.toHexString(keys.getClientWriteKey(), ':'),
                 Util.toHexString(keys.getClientWriteIV(), ':'),
                 Util.toHexString(keys.getServerWriteKey(), ':'),
@@ -167,7 +168,8 @@ SSL-Session:
                 new SecretKeySpec(keys.getServerWriteKey(), "AES"), keys.getServerWriteIV(), 128);
 
         record = new Record(ByteBuffer.wrap(clientFinishedBytes));
-        System.out.printf("client finished (encrypted) %d:%n%s%n", clientFinishedBytes.length, record);
+        if (TestDebug.DEBUG)
+            System.out.printf("client finished (encrypted) %d:%n%s%n", clientFinishedBytes.length, record);
         assertEquals(ContentType.HANDSHAKE, record.contentType());
         ByteBuffer decrypted = ByteBuffer.allocate(record.length());
         clientIn.decrypt(record, new ByteBuffer[]{decrypted}, 0, 1);

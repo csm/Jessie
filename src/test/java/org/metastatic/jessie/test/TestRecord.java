@@ -22,7 +22,8 @@ public class TestRecord
     {
         byte[] bytes = Util.toByteArray("1703030000");
         Record record = new Record(ByteBuffer.wrap(bytes));
-        System.out.println(record);
+        if (TestDebug.DEBUG)
+            System.out.println(record);
         assertEquals(ContentType.APPLICATION_DATA, record.contentType());
         assertEquals(ProtocolVersion.TLS_1_2, record.version());
         assertEquals(0, record.length());

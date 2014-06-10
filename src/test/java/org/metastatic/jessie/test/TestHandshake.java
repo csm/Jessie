@@ -61,7 +61,8 @@ public class TestHandshake {
     public void testHelloRequestRecord() throws Exception {
         byte[] bytes = Util.toByteArray("160303000400000000");
         Record record = new Record(ByteBuffer.wrap(bytes));
-        System.out.println(record);
+        if (TestDebug.DEBUG)
+            System.out.println(record);
         assertEquals(ContentType.HANDSHAKE, record.contentType());
         assertEquals(ProtocolVersion.TLS_1_2, record.version());
         assertEquals(4, record.length());
@@ -95,7 +96,8 @@ public class TestHandshake {
         assertTrue(hello.cipherSuites().get(0) instanceof CipherSuite.TLS_NULL_WITH_NULL_NULL);
         assertEquals(1, hello.compressionMethods().size());
         assertEquals(CompressionMethod.NULL, hello.compressionMethods().get(0));
-        System.out.printf("%s%n", handshake);
+        if (TestDebug.DEBUG)
+            System.out.printf("%s%n", handshake);
     }
 
     @Test
@@ -120,7 +122,8 @@ public class TestHandshake {
         assertArrayEquals(new byte[]{0x53}, hello.sessionId());
         assertTrue(hello.cipherSuite() instanceof CipherSuite.TLS_NULL_WITH_NULL_NULL);
         assertEquals(CompressionMethod.NULL, hello.compressionMethod());
-        System.out.printf("%s%n", handshake);
+        if (TestDebug.DEBUG)
+            System.out.printf("%s%n", handshake);
     }
 
     @Test
@@ -135,7 +138,8 @@ public class TestHandshake {
         assertTrue(body instanceof Certificate);
         Certificate cert = (Certificate) body;
         assertEquals(1, cert.certificates().size());
-        System.out.println(handshake);
+        if (TestDebug.DEBUG)
+            System.out.println(handshake);
     }
 
     @Test
@@ -153,6 +157,7 @@ public class TestHandshake {
         ServerKeyExchange kex = (ServerKeyExchange) body;
         Object params = kex.params();
         assertTrue(params instanceof ServerDHParams);
-        System.out.printf("%s%n", handshake);
+        if (TestDebug.DEBUG)
+            System.out.printf("%s%n", handshake);
     }
 }
