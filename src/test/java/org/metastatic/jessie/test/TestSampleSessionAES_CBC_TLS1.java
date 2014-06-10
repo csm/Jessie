@@ -17,7 +17,7 @@ import static org.junit.Assert.assertEquals;
 
 /**
  */
-public class TestSampleSession1
+public class TestSampleSessionAES_CBC_TLS1
 {
     // openssl s_client -cipher DHE-RSA-AES256-SHA:DHE-DSS-AES256-SHA:AES256-SHA:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA:AES128-SHA -connect www.google.com:443 -tls1
     // Then, type in "GET /x HTTP/1.0\n\n"

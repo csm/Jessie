@@ -40,6 +40,7 @@ package org.metastatic.jessie.provider;
 
 import javax.crypto.*;
 import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.IvParameterSpec;
 import javax.net.ssl.SSLException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -49,7 +50,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
-import java.util.Arrays;
+import java.security.MessageDigest;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.DataFormatException;
@@ -64,9 +65,12 @@ public class InputSecurityParameters
     private final ProtocolVersion version;
     private final CipherSuite suite;
     private long sequence;
-    private SecretKey gcmSecretKey;
-    private int gcmTagLength;
-    private byte[] gcmSalt;
+
+    private final SecretKey tls11SecretKey;
+
+    private final SecretKey gcmSecretKey;
+    private final int gcmTagLength;
+    private final byte[] gcmSalt;
 
     public InputSecurityParameters(final Cipher cipher, final Mac mac,
                                    final Inflater inflater,
@@ -79,21 +83,43 @@ public class InputSecurityParameters
         this.version = version;
         this.suite = suite;
         sequence = 0;
+        tls11SecretKey = null;
+        gcmSecretKey = null;
+        gcmTagLength = 0;
+        gcmSalt = null;
     }
 
-    public void setGcmSecretKey(SecretKey gcmSecretKey)
+    public InputSecurityParameters(final Cipher cipher, final Mac mac,
+                                   final Inflater inflater, final ProtocolVersion version,
+                                   final CipherSuite suite, final SecretKey tls11SecretKey)
     {
-        this.gcmSecretKey = gcmSecretKey;
+        this.cipher = cipher;
+        this.mac = mac;
+        this.inflater = inflater;
+        this.version = version;
+        this.suite = suite;
+        this.tls11SecretKey = tls11SecretKey;
+        sequence = 0;
+        gcmSalt = null;
+        gcmSecretKey = null;
+        gcmTagLength = 0;
     }
 
-    public void setGcmTagLength(int gcmTagLength)
+    public InputSecurityParameters(final Cipher cipher, final Inflater inflater,
+                                   final ProtocolVersion version, final CipherSuite suite,
+                                   final SecretKey gcmSecretKey, final byte[] gcmSalt,
+                                   final int gcmTagLength)
     {
-        this.gcmTagLength = gcmTagLength;
-    }
-
-    public void setGcmSalt(byte[] gcmSalt)
-    {
+        this.cipher = cipher;
+        this.mac = null;
+        this.inflater = inflater;
+        this.version = version;
+        this.suite = suite;
+        tls11SecretKey = null;
         this.gcmSalt = gcmSalt.clone();
+        this.gcmSecretKey = gcmSecretKey;
+        this.gcmTagLength = gcmTagLength;
+        sequence = 0;
     }
 
     /**
@@ -147,6 +173,8 @@ public class InputSecurityParameters
         boolean badPadding = false;
         ByteBuffer fragment;
 
+        byte[] iv = new byte[0];
+        int ivlen = 0;
         if (cipher != null)
         {
             if (suite.cipherAlgorithm() == CipherAlgorithm.AES_GCM)
@@ -194,27 +222,40 @@ public class InputSecurityParameters
             else
             {
                 ByteBuffer input = record.fragment();
+                if (!suite.isStreamCipher() && version.compareTo(ProtocolVersion.TLS_1_1) >= 0)
+                {
+                    ivlen = cipher.getBlockSize();
+                    iv = new byte[ivlen];
+                    input.get(iv);
+                    try
+                    {
+                        cipher.init(Cipher.DECRYPT_MODE, tls11SecretKey, new IvParameterSpec(iv));
+                    }
+                    catch (InvalidKeyException | InvalidAlgorithmParameterException e)
+                    {
+                        throw new SSLException(e);
+                    }
+                }
                 fragment = ByteBuffer.allocate(input.remaining());
                 cipher.update(input, fragment);
+                fragment.flip();
             }
-        } else
+        }
+        else
+        {
             fragment = record.fragment();
+        }
 
         if (Debug.DEBUG_DECRYPTION)
             logger.log(Level.INFO, "decrypted fragment:\n{0}",
                     Util.hexDump((ByteBuffer) fragment.duplicate().position(0), " >> "));
 
-        int fragmentLength = record.length();
-        int maclen = 0;
-        if (mac != null)
-            maclen = mac.getMacLength();
-        fragmentLength -= maclen;
-
+        int fragmentLength = fragment.remaining();
         int padlen = 0;
         int padRemoveLen = 0;
         if (!suite.isStreamCipher())
         {
-            padlen = fragment.get(record.length() - 1) & 0xFF;
+            padlen = fragment.get(fragmentLength - 1) & 0xFF;
             padRemoveLen = padlen + 1;
             if (Debug.DEBUG)
                 logger.log(Level.INFO, "padlen:{0}", padlen);
@@ -223,7 +264,7 @@ public class InputSecurityParameters
             // value `padlen'.
             // Here we compare all bytes leading up to the padding, up to
             // 256 bytes, to try and foil timing attacks.
-            badPadding = checkPadding(record.length(), fragment, padlen);
+            badPadding = checkPadding(fragmentLength, fragment, padlen);
 
             if (Debug.DEBUG)
                 logger.log(Level.INFO, "padding bad? {0}",
@@ -232,15 +273,18 @@ public class InputSecurityParameters
                 fragmentLength = fragmentLength - padRemoveLen;
         }
 
-        int ivlen = 0;
-        if (version.compareTo(ProtocolVersion.TLS_1_1) >= 0
-                && !suite.isStreamCipher())
-            ivlen = cipher.getBlockSize();
-
         // Compute and check the MAC.
+
+        int maclen = 0;
         if (mac != null)
         {
-            mac.update((byte) (sequence >>> 56));
+            maclen = mac.getMacLength();
+            fragmentLength -= maclen;
+            ByteBuffer auth = authenticator(sequence, record.getContentType(),
+                    record.version(), (short) (fragmentLength));
+            //System.out.println("authenticator: " + Util.hexDump(auth));
+            mac.update(auth);
+            /*mac.update((byte) (sequence >>> 56));
             mac.update((byte) (sequence >>> 48));
             mac.update((byte) (sequence >>> 40));
             mac.update((byte) (sequence >>> 32));
@@ -250,40 +294,28 @@ public class InputSecurityParameters
             mac.update((byte) sequence);
             mac.update((byte) record.getContentType().getValue());
             ProtocolVersion version = record.version();
-            if (version != ProtocolVersion.SSL_3)
-            {
-                mac.update((byte) version.major());
-                mac.update((byte) version.minor());
-            }
-            mac.update((byte) ((fragmentLength - ivlen) >>> 8));
-            mac.update((byte) (fragmentLength - ivlen));
+            mac.update((byte) version.major());
+            mac.update((byte) version.minor());
+            mac.update((byte) ((fragmentLength) >>> 8));
+            mac.update((byte) (fragmentLength));*/
             ByteBuffer content =
-                    (ByteBuffer) fragment.duplicate().position(ivlen).limit(fragmentLength);
+                    (ByteBuffer) fragment.duplicate().limit(fragmentLength);
+            //System.out.printf("length: %d, content to MAC:%n%s%n", fragmentLength, Util.hexDump(content));
             mac.update(content);
-            Mac dupeMac = null;
-            try
-            {
-                dupeMac = (Mac) mac.clone();
-            }
-            catch (CloneNotSupportedException|ClassCastException e)
-            {
-                // ignore, we just won't compute the additional mac of
-                // the padding bytes below.
-            }
-
             byte[] mac1 = mac.doFinal();
-            if (dupeMac != null) {
-                ByteBuffer paddingBuffer = (ByteBuffer) fragment.duplicate().position(fragmentLength);
-                dupeMac.update(paddingBuffer);
-                byte[] x = dupeMac.doFinal();
-            }
-            byte[] mac2 = new byte[maclen];
+
+            // Run the MAC over the rest of the padding, too.
+            ByteBuffer paddingBuffer = (ByteBuffer) fragment.duplicate().position(fragmentLength);
+            mac.update(paddingBuffer);
+            byte[] x = mac.doFinal();
+
+            byte[] mac2 = new byte[mac.getMacLength()];
             mac.reset();
             ((ByteBuffer) fragment.duplicate().position(fragmentLength)).get(mac2);
             if (Debug.DEBUG)
-                logger.log(Level.FINE, "mac1:{0} mac2:{1}",
+                logger.log(Level.INFO, "mac1:{0} mac2:{1}",
                         new Object[]{Util.toHexString(mac1, ':'), Util.toHexString(mac2, ':')});
-            if (!Arrays.equals(mac1, mac2))
+            if (!MessageDigest.isEqual(mac1, mac2))
                 badPadding = true;
         }
 
@@ -300,11 +332,6 @@ public class InputSecurityParameters
             byte[] inbuffer = new byte[1024];
             byte[] outbuffer = new byte[1024];
             boolean done = false;
-            if (record.version().compareTo(ProtocolVersion.TLS_1_1) >= 0
-                    && !suite.isStreamCipher())
-                fragment.position(cipher.getBlockSize());
-            else
-                fragment.position(0);
             fragment.limit(fragmentLength);
 
             while (!done)
@@ -353,10 +380,7 @@ public class InputSecurityParameters
         else
         {
             ByteBuffer outbuf = (ByteBuffer)
-                    fragment.duplicate().position(0).limit(record.length() - maclen - padRemoveLen);
-            if (record.version().compareTo(ProtocolVersion.TLS_1_1) >= 0
-                    && !suite.isStreamCipher())
-                outbuf.position(cipher.getBlockSize());
+                    fragment.duplicate().position(0).limit(fragmentLength);
             if (outputStream != null)
             {
                 byte[] buf = new byte[1024];
@@ -427,5 +451,18 @@ public class InputSecurityParameters
         for (; i < totalLength; i++)
             mask[i] = (byte) 0xFF;
         return mask;
+    }
+
+    private static ByteBuffer authenticator(long sequence, ContentType type,
+                                            ProtocolVersion version, short fragmentLength)
+    {
+        ByteBuffer buffer = ByteBuffer.allocate(8 + 1 + 2 + 2);
+        buffer.order(ByteOrder.BIG_ENDIAN);
+        buffer.putLong(sequence);
+        buffer.put((byte) type.getValue());
+        buffer.put(version.getEncoded());
+        buffer.putShort(fragmentLength);
+        buffer.flip();
+        return buffer;
     }
 }

@@ -37,20 +37,19 @@ exception statement from your version.  */
 
 package org.metastatic.jessie.test;
 
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.ByteBuffer;
+
 import org.junit.Test;
 import org.metastatic.jessie.SSLProtocolVersion;
 import org.metastatic.jessie.provider.*;
 
-import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
-import javax.crypto.spec.SecretKeySpec;
-import javax.net.ssl.SSLException;
-import java.nio.ByteBuffer;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class TestSampleSessionAES_GCM
+public class TestSampleSessionAES_GCM_TLS1_2
 {
     // C="ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-DSS-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:ECDH-RSA-AES256-GCM-SHA384:ECDH-ECDSA-AES256-GCM-SHA384:AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:DHE-RSA-AES128-GCM-SHA256:ECDH-RSA-AES128-GCM-SHA256:ECDH-ECDSA-AES128-GCM-SHA256:AES128-GCM-SHA256"
     // openssl s_client -tls1_2 -cipher $C -connect www.google.com:443
@@ -162,14 +161,10 @@ SSL-Session:
         Cipher clientCipher = suite.cipher(protocolVersion);
         Cipher serverCipher = suite.cipher(protocolVersion);
 
-        InputSecurityParameters clientIn = new InputSecurityParameters(clientCipher, null, null, serverHello.version(), suite);
-        clientIn.setGcmSecretKey(new SecretKeySpec(keys.getClientWriteKey(), "AES"));
-        clientIn.setGcmTagLength(128);
-        clientIn.setGcmSalt(keys.getClientWriteIV());
-        InputSecurityParameters serverIn = new InputSecurityParameters(serverCipher, null, null, serverHello.version(), suite);
-        serverIn.setGcmSecretKey(new SecretKeySpec(keys.getServerWriteKey(), "AES"));
-        serverIn.setGcmTagLength(128);
-        serverIn.setGcmSalt(keys.getServerWriteIV());
+        InputSecurityParameters clientIn = new InputSecurityParameters(clientCipher, null, serverHello.version(), suite,
+                new SecretKeySpec(keys.getClientWriteKey(), "AES"), keys.getClientWriteIV(), 128);
+        InputSecurityParameters serverIn = new InputSecurityParameters(serverCipher, null, serverHello.version(), suite,
+                new SecretKeySpec(keys.getServerWriteKey(), "AES"), keys.getServerWriteIV(), 128);
 
         record = new Record(ByteBuffer.wrap(clientFinishedBytes));
         System.out.printf("client finished (encrypted) %d:%n%s%n", clientFinishedBytes.length, record);
