@@ -185,7 +185,7 @@ public class InputSecurityParameters
                 byte[] ivBytes = new byte[12]; // FIXME this could be different, this is for AES/GCM suites
                 System.arraycopy(gcmSalt, 0, ivBytes, 0, gcmSalt.length);
                 input.get(ivBytes, gcmSalt.length, ivBytes.length - gcmSalt.length);
-                if (Debug.DEBUG)
+                if (Debug.DEBUG_DECRYPTION)
                     logger.log(Level.INFO, "AEAD ivBytes:{0}, record.length:{1} input.remaining:{2}",
                             new Object[] { Util.toHexString(ivBytes, ':'), record.length(), input.remaining() });
                 try
@@ -199,7 +199,7 @@ public class InputSecurityParameters
                 }
                 ByteBuffer aadBuffer = authenticator(sequence, record.contentType(), record.version(),
                         (short) (input.remaining() - (gcmTagLength / 8)));
-                if (Debug.DEBUG)
+                if (Debug.DEBUG_DECRYPTION)
                     logger.log(Level.INFO, "GCM AAD:\n{0}", Util.hexDump(aadBuffer));
                 cipher.updateAAD(aadBuffer);
                 fragment = ByteBuffer.allocate(input.remaining() - (gcmTagLength / 8));

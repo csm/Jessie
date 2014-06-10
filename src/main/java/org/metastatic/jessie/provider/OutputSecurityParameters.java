@@ -168,6 +168,7 @@ public class OutputSecurityParameters
             ivlen = 8;
             iv = new byte[ivlen];
             session.random().nextBytes(iv);
+            //System.out.println("GCM nonce: " + Util.toHexString(iv, ':'));
         }
 
         int padaddlen = 0;
@@ -279,7 +280,9 @@ public class OutputSecurityParameters
 
         if (Debug.DEBUG_ENCRYPTION)
             logger.log(Level.INFO, "TLSCompressed.length:{0} fragmentLength:{1} macLen:{2} padlen:{3} mac:{4} pad:{5}",
-                       new Object[] { tlsCompressedLength, fragmentLength, maclen, padlen, Util.toHexString(macValue), Util.toHexString(pad) });
+                       new Object[] { tlsCompressedLength, fragmentLength, maclen, padlen,
+                               macValue != null ? Util.toHexString(macValue) : "(none)",
+                               pad != null ? Util.toHexString(pad) : "(none)" });
 
         Record outrecord = new Record(output);
         outrecord.setContentType(contentType);
@@ -298,6 +301,7 @@ public class OutputSecurityParameters
                     byte[] ivValue = new byte[gcmSeed.length + iv.length];
                     System.arraycopy(gcmSeed, 0, ivValue, 0, gcmSeed.length);
                     System.arraycopy(iv, 0, ivValue, gcmSeed.length, iv.length);
+
                     try
                     {
                         cipher.init(Cipher.ENCRYPT_MODE, gcmKey, new GCMParameterSpec(gcmTagLength, ivValue));
@@ -308,8 +312,9 @@ public class OutputSecurityParameters
                     }
                     ByteBuffer aad = InputSecurityParameters.authenticator(sequence, contentType, session.version,
                             (short) tlsCompressedLength);
+                    //System.out.println("GCM AAD: " + Util.hexDump(aad));
                     cipher.updateAAD(aad);
-                    outfragment.put(ivValue);
+                    outfragment.put(iv);
                 }
                 else // CBC, explicit IV
                 {

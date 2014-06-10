@@ -41,14 +41,15 @@ import org.junit.Test;
 import org.metastatic.jessie.SSLProtocolVersion;
 import org.metastatic.jessie.provider.*;
 
-import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
-import javax.crypto.Mac;
+import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.security.Provider;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.zip.DataFormatException;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -59,6 +60,10 @@ public class TestOutputInput
     static final byte[] KEY_EXPANSION = new byte[]{107, 101, 121, 32, 101, 120, 112,
             97, 110, 115, 105, 111, 110};
 
+    // This (and some other instances of setting up crypto algs) is a good case study
+    // in one way we're WET vs. DRY (we love typing). We really could unify a lot of
+    // this stuff into a sensible (testable!) API.
+
     @Test
     public void testTLS1CBC() throws Exception
     {
@@ -66,7 +71,7 @@ public class TestOutputInput
         ProtocolVersion version = ProtocolVersion.TLS_1;
         SessionImpl session = new SessionImpl();
         session.version = version;
-        session.random = new SecureRandom();
+        session.random = InsecureRandom.getInsecureRandom();
         byte[] masterSecret = new byte[48];
         Arrays.fill(masterSecret, (byte) 0xab);
         byte[] seed = new byte[KEY_EXPANSION.length + 56];
@@ -91,6 +96,11 @@ public class TestOutputInput
         readMac.init(new SecretKeySpec(keys.getClientWriteMACKey(), readMac.getAlgorithm()));
         InputSecurityParameters in = new InputSecurityParameters(readCipher, readMac, null, version, suite);
 
+        runEncryptDecryptTest(out, in);
+    }
+
+    private void runEncryptDecryptTest(OutputSecurityParameters out, InputSecurityParameters in) throws DataFormatException, IllegalBlockSizeException, ShortBufferException, IOException
+    {
         for (int i = 0; i < 1024; i++)
         {
             byte[] data1 = new byte[i];
@@ -99,6 +109,7 @@ public class TestOutputInput
             out.encrypt(new ByteBuffer[]{ByteBuffer.wrap(data1)}, 0, 1, ContentType.APPLICATION_DATA, output);
             output.flip();
             Record record = new Record(output);
+            //System.out.println("encrypted record: " + record);
             ByteBuffer decrypted = ByteBuffer.allocate(record.length());
             in.decrypt(record, new ByteBuffer[]{decrypted}, 0, 1);
             decrypted.flip();
@@ -116,7 +127,7 @@ public class TestOutputInput
         ProtocolVersion version = ProtocolVersion.TLS_1_1;
         SessionImpl session = new SessionImpl();
         session.version = version;
-        session.random = new SecureRandom();
+        session.random = InsecureRandom.getInsecureRandom();
         byte[] masterSecret = new byte[48];
         Arrays.fill(masterSecret, (byte) 0xab);
         byte[] seed = new byte[KEY_EXPANSION.length + 56];
@@ -140,21 +151,44 @@ public class TestOutputInput
         InputSecurityParameters in = new InputSecurityParameters(readCipher, readMac, null, version, suite,
                 new SecretKeySpec(keys.getClientWriteKey(), suite.cipherAlgorithm().name()));
 
-        for (int i = 0; i < 1024; i++)
+        runEncryptDecryptTest(out, in);
+    }
+
+    @Test
+    public void testTLS1_2GCM() throws Exception
+    {
+        CipherSuite suite = new CipherSuite.TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256();
+        ProtocolVersion version = ProtocolVersion.TLS_1_2;
+        SessionImpl session = new SessionImpl();
+        session.version = version;
+        session.random = InsecureRandom.getInsecureRandom();
+
+        byte[] masterSecret = new byte[48];
+        Arrays.fill(masterSecret, (byte) 0xab);
+        byte[] seed = new byte[KEY_EXPANSION.length + 56];
+        Arrays.fill(seed, (byte) 0xcd);
+        System.arraycopy(KEY_EXPANSION, 0, seed, 0, KEY_EXPANSION.length);
+
+        KeyGenerator prf = new TestableKeyGenerator(new TLSKeyGenerators.TLSKeyGeneratorSHA256(), new Prov(), "P_SHA256");
+        prf.init(new TLSKeyGeneratorParameterSpec("P_SHA256", seed, masterSecret, suite.keyLength(), 0, suite.ivLength()));
+        TLSSessionKeys keys = (TLSSessionKeys) prf.generateKey();
+
+        Cipher writeCipher = suite.cipher(version.protocolVersion());
+        // TODO the line below needs two things fixed, the algorithm name (not hardcoded "AES"), and the tag length.
+        OutputSecurityParameters out = new OutputSecurityParameters(writeCipher, null, session, suite, new SecretKeySpec(keys.getClientWriteKey(), "AES"), keys.getClientWriteIV(), 128);
+
+        Cipher readCipher = suite.cipher(version.protocolVersion());
+        // TODO same here
+        InputSecurityParameters in = new InputSecurityParameters(readCipher, null, version, suite, new SecretKeySpec(keys.getClientWriteKey(), "AES"), keys.getClientWriteIV(), 128);
+
+        runEncryptDecryptTest(out, in);
+    }
+
+    static class Prov extends Provider
+    {
+        Prov()
         {
-            byte[] data1 = new byte[i];
-            Arrays.fill(data1, (byte) i);
-            ByteBuffer output = ByteBuffer.allocate(2048); // should be large enough
-            out.encrypt(new ByteBuffer[]{ByteBuffer.wrap(data1)}, 0, 1, ContentType.APPLICATION_DATA, output);
-            output.flip();
-            Record record = new Record(output);
-            ByteBuffer decrypted = ByteBuffer.allocate(record.length());
-            in.decrypt(record, new ByteBuffer[]{decrypted}, 0, 1);
-            decrypted.flip();
-            assertEquals(i, decrypted.remaining());
-            byte[] data2 = new byte[i];
-            decrypted.get(data2);
-            assertArrayEquals(data1, data2);
+            super("test", 1.0, "test provider");
         }
     }
 }
