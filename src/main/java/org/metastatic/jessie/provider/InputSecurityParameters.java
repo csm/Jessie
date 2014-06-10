@@ -254,7 +254,7 @@ public class InputSecurityParameters
             padlen = fragment.get(fragmentLength - 1) & 0xFF;
             padRemoveLen = padlen + 1;
             if (Debug.DEBUG)
-                logger.log(Level.INFO, "padlen:{0}", padlen);
+                logger.log(Level.FINE, "padlen:{0}", padlen);
 
             // In TLSv1 and later, the padding must be `padlen' copies of the
             // value `padlen'.
@@ -263,7 +263,7 @@ public class InputSecurityParameters
             badPadding = checkPadding(fragmentLength, fragment, padlen);
 
             if (Debug.DEBUG)
-                logger.log(Level.INFO, "padding bad? {0}",
+                logger.log(Level.FINE, "padding bad? {0}",
                         badPadding);
             if (!badPadding)
                 fragmentLength = fragmentLength - padRemoveLen;
@@ -309,7 +309,7 @@ public class InputSecurityParameters
             mac.reset();
             ((ByteBuffer) fragment.duplicate().position(fragmentLength)).get(mac2);
             if (Debug.DEBUG)
-                logger.log(Level.INFO, "mac1:{0} mac2:{1}",
+                logger.log(Level.FINE, "mac1:{0} mac2:{1}",
                         new Object[]{Util.toHexString(mac1, ':'), Util.toHexString(mac2, ':')});
             if (!MessageDigest.isEqual(mac1, mac2))
                 badPadding = true;

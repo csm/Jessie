@@ -145,7 +145,7 @@ public class OutputSecurityParameters
 
         if (Debug.DEBUG)
             for (int i = offset; i < offset + length; i++)
-                logger.log(Level.INFO, "encrypting record [{0}]: {1}",
+                logger.log(Level.FINE, "encrypting record [{0}]: {1}",
                         new Object[]{i - offset, input[i]});
 
         int maclen = 0;
@@ -244,7 +244,7 @@ public class OutputSecurityParameters
             int bs = cipher.getBlockSize();
             padlen = bs - (fragmentLength % bs);
             if (Debug.DEBUG)
-                logger.log(Level.INFO,
+                logger.log(Level.FINE,
                            "framentLen:{0} padlen:{1} blocksize:{2}",
                            new Object[] { fragmentLength, padlen, bs });
             // TLS 1.0 and later uses a random amount of padding, up to
