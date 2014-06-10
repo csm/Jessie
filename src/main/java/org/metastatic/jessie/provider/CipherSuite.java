@@ -1214,6 +1214,38 @@ public class CipherSuite extends SSLCipherSuite implements Constructed {
         return keyLength;
     }
 
+    public int macLength()
+    {
+        if (macAlgorithm != null && cipherAlgorithm != CipherAlgorithm.AES_GCM)
+        {
+            switch (macAlgorithm)
+            {
+                case MD5:
+                    return 16;
+                case SHA:
+                    return 20;
+                case SHA256:
+                    return 32;
+                case SHA384:
+                    return 48;
+            }
+        }
+        return 0;
+    }
+
+    public int ivLength()
+    {
+        switch (cipherAlgorithm)
+        {
+            case AES:
+                return 16;
+            case AES_GCM:
+                return 4;
+            default:
+                return 0;
+        }
+    }
+
     public boolean isExportable() {
         return exportable;
     }

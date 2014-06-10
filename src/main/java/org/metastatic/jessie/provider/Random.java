@@ -46,105 +46,105 @@ import java.nio.ByteOrder;
 
 /**
  * An SSL nonce.
- *
+ * <p/>
  * <pre>
-struct
-{
-  uint32 gmt_unix_time;
-  opaque random_bytes[28];
-} Random;
+ * struct
+ * {
+ * uint32 gmt_unix_time;
+ * opaque random_bytes[28];
+ * } Random;
  */
 public class Random implements Builder, Constructed
 {
 
-  // Fields.
-  // -------------------------------------------------------------------------
+    // Fields.
+    // -------------------------------------------------------------------------
 
-  static final int RANDOM_LENGTH = 28;
+    static final int RANDOM_LENGTH = 28;
 
-  private final ByteBuffer buffer;
+    private final ByteBuffer buffer;
 
-  // Constructors.
-  // -------------------------------------------------------------------------
+    // Constructors.
+    // -------------------------------------------------------------------------
 
-  public Random (final ByteBuffer buffer)
-  {
-    this.buffer = buffer.duplicate().order(ByteOrder.BIG_ENDIAN);
-  }
+    public Random(final ByteBuffer buffer)
+    {
+        this.buffer = buffer.duplicate().order(ByteOrder.BIG_ENDIAN);
+    }
 
-  public Random copy()
-  {
-    ByteBuffer buffer = ByteBuffer.allocate(32);
-    buffer.put((ByteBuffer) this.buffer.duplicate().position(0));
-    return new Random(buffer);
-  }
+    public Random copy()
+    {
+        ByteBuffer buffer = ByteBuffer.allocate(32);
+        buffer.put((ByteBuffer) this.buffer.duplicate().position(0));
+        return new Random(buffer);
+    }
 
-  public int length()
-  {
-    return RANDOM_LENGTH + 4;
-  }
+    public int length()
+    {
+        return RANDOM_LENGTH + 4;
+    }
 
-  public ByteBuffer buffer()
-  {
-    return ((ByteBuffer) buffer.duplicate().position(0).limit(length())).slice();
-  }
+    public ByteBuffer buffer()
+    {
+        return ((ByteBuffer) buffer.duplicate().position(0).limit(length())).slice();
+    }
 
-  public int gmtUnixTime ()
-  {
-    return buffer.getInt(0);
-  }
+    public int gmtUnixTime()
+    {
+        return buffer.getInt(0);
+    }
 
-  public byte[] randomBytes()
-  {
-    byte[] buf = new byte[28];
-    buffer.position (4);
-    buffer.get (buf);
-    return buf;
-  }
+    public byte[] randomBytes()
+    {
+        byte[] buf = new byte[28];
+        buffer.position(4);
+        buffer.get(buf);
+        return buf;
+    }
 
-  public void setGmtUnixTime (final int gmtUnixTime)
-  {
-    buffer.putInt (0, gmtUnixTime);
-  }
+    public void setGmtUnixTime(final int gmtUnixTime)
+    {
+        buffer.putInt(0, gmtUnixTime);
+    }
 
-  public void setRandomBytes (final byte[] randomBytes)
-  {
-    setRandomBytes (randomBytes, 0);
-  }
+    public void setRandomBytes(final byte[] randomBytes)
+    {
+        setRandomBytes(randomBytes, 0);
+    }
 
-  public void setRandomBytes (final byte[] randomBytes, final int offset)
-  {
-    if (randomBytes.length - offset < RANDOM_LENGTH)
-      throw new IllegalArgumentException ("random value too short");
-    buffer.position (4);
-    buffer.put (randomBytes, offset, RANDOM_LENGTH);
-  }
+    public void setRandomBytes(final byte[] randomBytes, final int offset)
+    {
+        if (randomBytes.length - offset < RANDOM_LENGTH)
+            throw new IllegalArgumentException("random value too short");
+        buffer.position(4);
+        buffer.put(randomBytes, offset, RANDOM_LENGTH);
+    }
 
-  public String toString (final String prefix)
-  {
-    StringWriter str = new StringWriter();
-    PrintWriter out = new PrintWriter(str);
-    if (prefix != null)
-      out.print (prefix);
-    out.println("struct {");
-    if (prefix != null)
-      out.print (prefix);
-    out.print ("  gmt_unix_time: ");
-    out.print (gmtUnixTime ());
-    out.println (";");
-    if (prefix != null)
-      out.print (prefix);
-    out.print ("  random_bytes:  ");
-    out.print (Util.toHexString (randomBytes (), ':'));
-    out.println (";");
-    if (prefix != null)
-      out.print (prefix);
-    out.print ("} Random;");
-    return str.toString();
-  }
+    public String toString(final String prefix)
+    {
+        StringWriter str = new StringWriter();
+        PrintWriter out = new PrintWriter(str);
+        if (prefix != null)
+            out.print(prefix);
+        out.println("struct {");
+        if (prefix != null)
+            out.print(prefix);
+        out.print("  gmt_unix_time: ");
+        out.print(gmtUnixTime());
+        out.println(";");
+        if (prefix != null)
+            out.print(prefix);
+        out.print("  random_bytes:  ");
+        out.print(Util.toHexString(randomBytes(), ':'));
+        out.println(";");
+        if (prefix != null)
+            out.print(prefix);
+        out.print("} Random;");
+        return str.toString();
+    }
 
-  public String toString ()
-  {
-    return toString (null);
-  }
+    public String toString()
+    {
+        return toString(null);
+    }
 }

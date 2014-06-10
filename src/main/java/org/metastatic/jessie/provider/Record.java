@@ -63,8 +63,6 @@ public class Record {
 
     public Record(final ByteBuffer buffer) {
         Preconditions.checkNotNull(buffer);
-        Preconditions.checkArgument(buffer.remaining() >= 5);
-        Preconditions.checkArgument(buffer.duplicate().order(ByteOrder.BIG_ENDIAN).getShort(3) == buffer.remaining() - 5);
         this.buffer = buffer.duplicate().order(ByteOrder.BIG_ENDIAN);
     }
 

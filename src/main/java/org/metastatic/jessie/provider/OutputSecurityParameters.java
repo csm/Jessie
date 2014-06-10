@@ -41,15 +41,17 @@ package org.metastatic.jessie.provider;
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.Mac;
-import javax.crypto.ShortBufferException;
+import javax.crypto.*;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.IvParameterSpec;
+import javax.net.ssl.SSLException;
 
 public class OutputSecurityParameters
 {
@@ -60,6 +62,12 @@ public class OutputSecurityParameters
     private final SessionImpl session;
     private final CipherSuite suite;
     private long sequence;
+
+    private final SecretKey tls11CBCKey;
+
+    private final SecretKey gcmKey;
+    private final byte[] gcmSeed;
+    private final int gcmTagLength;
 
     static final boolean enableCBCProtection;
 
@@ -82,6 +90,42 @@ public class OutputSecurityParameters
         this.session = session;
         this.suite = suite;
         sequence = 0;
+        tls11CBCKey = null;
+        gcmKey = null;
+        gcmSeed = null;
+        gcmTagLength = 0;
+    }
+
+    // Constructor for TLSv1.1+ CBC ciphers
+    public OutputSecurityParameters(Cipher cipher, Mac mac, Deflater deflater, SessionImpl session, CipherSuite suite,
+                                    SecretKey tls11CBCKey)
+    {
+        this.cipher = cipher;
+        this.mac = mac;
+        this.deflater = deflater;
+        this.session = session;
+        this.suite = suite;
+        this.tls11CBCKey = tls11CBCKey;
+        sequence = 0;
+        gcmKey = null;
+        gcmSeed = null;
+        gcmTagLength = 0;
+    }
+
+    // Constructor for TLSv1.2+ GCM modes
+    public OutputSecurityParameters(Cipher cipher, Deflater deflater, SessionImpl session, CipherSuite suite,
+                                    SecretKey gcmKey, byte[] gcmSeed, int gcmTagLength)
+    {
+        this.cipher = cipher;
+        this.deflater = deflater;
+        this.session = session;
+        this.suite = suite;
+        this.gcmKey = gcmKey;
+        this.gcmSeed = gcmSeed;
+        this.gcmTagLength = gcmTagLength;
+        sequence = 0;
+        tls11CBCKey = null;
+        mac = null;
     }
 
     /**
@@ -101,12 +145,14 @@ public class OutputSecurityParameters
 
         if (Debug.DEBUG)
             for (int i = offset; i < offset + length; i++)
-                logger.log(Level.FINE, "encrypting record [{0}]: {1}",
+                logger.log(Level.INFO, "encrypting record [{0}]: {1}",
                         new Object[]{i - offset, input[i]});
 
         int maclen = 0;
         if (mac != null)
             maclen = session.isTruncatedMac() ? 10 : mac.getMacLength();
+        if (suite.cipherAlgorithm() == CipherAlgorithm.AES_GCM)
+            maclen = gcmTagLength / 8;
 
         int ivlen = 0;
         byte[] iv = null;
@@ -117,16 +163,23 @@ public class OutputSecurityParameters
             iv = new byte[ivlen];
             session.random().nextBytes(iv);
         }
+        if (suite.cipherAlgorithm() == CipherAlgorithm.AES_GCM)
+        {
+            ivlen = 8;
+            iv = new byte[ivlen];
+            session.random().nextBytes(iv);
+        }
 
         int padaddlen = 0;
         if (!suite.isStreamCipher()
-                && session.version.compareTo(ProtocolVersion.TLS_1) >= 0)
+            && session.version.compareTo(ProtocolVersion.TLS_1) >= 0)
         {
             padaddlen = (session.random().nextInt(255 / cipher.getBlockSize())
                     * cipher.getBlockSize());
         }
 
         int fragmentLength = 0;
+        int tlsCompressedLength = 0;
         ByteBuffer[] fragments = null;
         // Compress the content, if needed.
         if (deflater != null)
@@ -164,7 +217,8 @@ public class OutputSecurityParameters
                 written += l;
             }
             fragments = new ByteBuffer[]{ ByteBuffer.wrap(deflated.toByteArray()) };
-            fragmentLength = ((int) deflater.getBytesWritten()) + maclen + ivlen;
+            tlsCompressedLength = ((int) deflater.getBytesWritten());
+            fragmentLength = tlsCompressedLength + maclen + ivlen;
             deflater.reset();
             offset = 0;
             length = 1;
@@ -178,6 +232,7 @@ public class OutputSecurityParameters
                 int l = Math.min(limit - fragmentLength, fragments[i].remaining());
                 fragmentLength += l;
             }
+            tlsCompressedLength = fragmentLength;
             fragmentLength += maclen + ivlen;
         }
 
@@ -189,7 +244,7 @@ public class OutputSecurityParameters
             int bs = cipher.getBlockSize();
             padlen = bs - (fragmentLength % bs);
             if (Debug.DEBUG)
-                logger.log(Level.FINE,
+                logger.log(Level.INFO,
                            "framentLen:{0} padlen:{1} blocksize:{2}",
                            new Object[] { fragmentLength, padlen, bs });
             // TLS 1.0 and later uses a random amount of padding, up to
@@ -208,33 +263,23 @@ public class OutputSecurityParameters
         byte[] macValue = null;
         if (mac != null)
         {
-            mac.update((byte) (sequence >>> 56));
-            mac.update((byte) (sequence >>> 48));
-            mac.update((byte) (sequence >>> 40));
-            mac.update((byte) (sequence >>> 32));
-            mac.update((byte) (sequence >>> 24));
-            mac.update((byte) (sequence >>> 16));
-            mac.update((byte) (sequence >>> 8));
-            mac.update((byte) sequence);
-            mac.update((byte) contentType.getValue());
-            if (session.version != ProtocolVersion.SSL_3)
-            {
-                mac.update((byte) session.version.major());
-                mac.update((byte) session.version.minor());
-            }
-            int toWrite = fragmentLength - maclen - ivlen - padlen;
-            mac.update((byte) (toWrite >>> 8));
-            mac.update((byte) toWrite);
+            ByteBuffer authenticator = InputSecurityParameters.authenticator(sequence, contentType, session.version,
+                    (short) tlsCompressedLength);
+            mac.update(authenticator);
             int written = 0;
-            for (int i = offset; i < length && written < toWrite; i++)
+            for (int i = offset; i < length && written < fragmentLength; i++)
             {
                 ByteBuffer fragment = fragments[i].duplicate();
-                int l = Math.min(fragment.remaining(), toWrite - written);
+                int l = Math.min(fragment.remaining(), fragmentLength - written);
                 fragment.limit(fragment.position() + l);
                 mac.update(fragment);
             }
             macValue = mac.doFinal();
         }
+
+        if (Debug.DEBUG_ENCRYPTION)
+            logger.log(Level.INFO, "TLSCompressed.length:{0} fragmentLength:{1} macLen:{2} padlen:{3} mac:{4} pad:{5}",
+                       new Object[] { tlsCompressedLength, fragmentLength, maclen, padlen, Util.toHexString(macValue), Util.toHexString(pad) });
 
         Record outrecord = new Record(output);
         outrecord.setContentType(contentType);
@@ -247,7 +292,39 @@ public class OutputSecurityParameters
         if (cipher != null)
         {
             if (iv != null)
-                cipher.update(ByteBuffer.wrap(iv), outfragment);
+            {
+                if (suite.cipherAlgorithm() == CipherAlgorithm.AES_GCM)
+                {
+                    byte[] ivValue = new byte[gcmSeed.length + iv.length];
+                    System.arraycopy(gcmSeed, 0, ivValue, 0, gcmSeed.length);
+                    System.arraycopy(iv, 0, ivValue, gcmSeed.length, iv.length);
+                    try
+                    {
+                        cipher.init(Cipher.ENCRYPT_MODE, gcmKey, new GCMParameterSpec(gcmTagLength, ivValue));
+                    }
+                    catch (InvalidKeyException | InvalidAlgorithmParameterException e)
+                    {
+                        throw new IllegalArgumentException(e);
+                    }
+                    ByteBuffer aad = InputSecurityParameters.authenticator(sequence, contentType, session.version,
+                            (short) tlsCompressedLength);
+                    cipher.updateAAD(aad);
+                    outfragment.put(ivValue);
+                }
+                else // CBC, explicit IV
+                {
+                    try
+                    {
+                        cipher.init(Cipher.ENCRYPT_MODE, tls11CBCKey, new IvParameterSpec(iv));
+                    }
+                    catch (InvalidKeyException | InvalidAlgorithmParameterException e)
+                    {
+                        // We don't expect this to happen.
+                        throw new IllegalArgumentException(e);
+                    }
+                    outfragment.put(iv);
+                }
+            }
             int toWrite = fragmentLength - maclen - ivlen - padlen;
             for (int i = offset; i < offset + length && consumed < toWrite; i++)
             {
@@ -262,6 +339,18 @@ public class OutputSecurityParameters
                 cipher.update(ByteBuffer.wrap(macValue), outfragment);
             if (pad != null)
                 cipher.update(ByteBuffer.wrap(pad), outfragment);
+            if (session.version.compareTo(ProtocolVersion.TLS_1) > 0)
+            {
+                try
+                {
+                    cipher.doFinal(ByteBuffer.wrap(new byte[0]), outfragment);
+                }
+                catch (BadPaddingException e)
+                {
+                    // Shouldn't happen. We are encrypting.
+                    throw new IllegalArgumentException(e);
+                }
+            }
         }
         else
         {

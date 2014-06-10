@@ -449,8 +449,8 @@ public class InputSecurityParameters
         return mask;
     }
 
-    private static ByteBuffer authenticator(long sequence, ContentType type,
-                                            ProtocolVersion version, short fragmentLength)
+    static ByteBuffer authenticator(long sequence, ContentType type,
+                                    ProtocolVersion version, short fragmentLength)
     {
         ByteBuffer buffer = ByteBuffer.allocate(8 + 1 + 2 + 2);
         buffer.order(ByteOrder.BIG_ENDIAN);
