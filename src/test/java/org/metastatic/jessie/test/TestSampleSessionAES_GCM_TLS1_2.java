@@ -170,25 +170,41 @@ SSL-Session:
         System.out.printf("client finished (encrypted) %d:%n%s%n", clientFinishedBytes.length, record);
         assertEquals(ContentType.HANDSHAKE, record.contentType());
         ByteBuffer decrypted = ByteBuffer.allocate(record.length());
-        try
-        {
-            clientIn.decrypt(record, new ByteBuffer[]{decrypted}, 0, 1);
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace(); // expected; can't get GCM to work yet
-        }
+        clientIn.decrypt(record, new ByteBuffer[]{decrypted}, 0, 1);
+        handshake = new Handshake(decrypted);
+        assertEquals(Handshake.Type.FINISHED, handshake.type());
 
         record = new Record(ByteBuffer.wrap(serverFinishedEtcBytes));
         assertEquals(ContentType.HANDSHAKE, record.contentType());
         decrypted = ByteBuffer.allocate(record.length());
-        try
-        {
-            serverIn.decrypt(record, new ByteBuffer[]{decrypted}, 0, 1);
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
+        serverIn.decrypt(record, new ByteBuffer[]{decrypted}, 0, 1);
+        handshake = new Handshake(decrypted);
+        assertEquals(Handshake.Type.FINISHED, handshake.type());
+
+        record = new Record(ByteBuffer.wrap(clientAppDataBytes1));
+        assertEquals(ContentType.APPLICATION_DATA, record.contentType());
+        decrypted = ByteBuffer.allocate(record.length());
+        clientIn.decrypt(record, new ByteBuffer[]{decrypted}, 0, 1);
+
+        record = new Record(ByteBuffer.wrap(clientAppDataBytes2));
+        assertEquals(ContentType.APPLICATION_DATA, record.contentType());
+        decrypted = ByteBuffer.allocate(record.length());
+        clientIn.decrypt(record, new ByteBuffer[]{decrypted}, 0, 1);
+
+        record = new Record(ByteBuffer.wrap(serverAppDataBytes1));
+        assertEquals(ContentType.APPLICATION_DATA, record.contentType());
+        decrypted = ByteBuffer.allocate(record.length());
+        serverIn.decrypt(record, new ByteBuffer[]{decrypted}, 0, 1);
+
+        record = new Record(ByteBuffer.wrap(serverAppDataBytes2));
+        assertEquals(ContentType.APPLICATION_DATA, record.contentType());
+        decrypted = ByteBuffer.allocate(record.length());
+        serverIn.decrypt(record, new ByteBuffer[]{decrypted}, 0, 1);
+
+        record = new Record(ByteBuffer.wrap(clientAlertBytes));
+        assertEquals(ContentType.ALERT, record.contentType());
+        decrypted = ByteBuffer.allocate(record.length());
+        clientIn.decrypt(record, new ByteBuffer[]{decrypted}, 0, 1);
+        Alert alert = new Alert(decrypted);
     }
 }
