@@ -108,4 +108,53 @@ public class TestOutputInput
             assertArrayEquals(data1, data2);
         }
     }
+
+    @Test
+    public void testTLS1_1CBC() throws Exception
+    {
+        CipherSuite suite = new CipherSuite.TLS_DH_DSS_WITH_AES_128_CBC_SHA();
+        ProtocolVersion version = ProtocolVersion.TLS_1_1;
+        SessionImpl session = new SessionImpl();
+        session.version = version;
+        session.random = new SecureRandom();
+        byte[] masterSecret = new byte[48];
+        Arrays.fill(masterSecret, (byte) 0xab);
+        byte[] seed = new byte[KEY_EXPANSION.length + 56];
+        Arrays.fill(seed, (byte) 0xcd);
+        System.arraycopy(KEY_EXPANSION, 0, seed, 0, KEY_EXPANSION.length);
+
+        KeyGenerator prf = new TestableKeyGenerator(new TLSPRFKeyGeneratorImpl(), new Jessie(), "TLS_PRF");
+        prf.init(new TLSKeyGeneratorParameterSpec("TLS_PRF", seed, masterSecret, suite.keyLength(), suite.macLength(), 0));
+        TLSSessionKeys keys = (TLSSessionKeys) prf.generateKey();
+
+        Cipher writeCipher = suite.cipher(version.protocolVersion());
+        // Don't init the cipher, it gets inited on each encrypt, with a random IV.
+        Mac writeMac = suite.mac(version.protocolVersion());
+        writeMac.init(new SecretKeySpec(keys.getClientWriteMACKey(), writeMac.getAlgorithm()));
+        OutputSecurityParameters out = new OutputSecurityParameters(writeCipher, writeMac, null, session, suite,
+                new SecretKeySpec(keys.getClientWriteKey(), suite.cipherAlgorithm().name()));
+
+        Cipher readCipher = suite.cipher(version.protocolVersion());
+        Mac readMac = suite.mac(version.protocolVersion());
+        readMac.init(new SecretKeySpec(keys.getClientWriteMACKey(), readMac.getAlgorithm()));
+        InputSecurityParameters in = new InputSecurityParameters(readCipher, readMac, null, version, suite,
+                new SecretKeySpec(keys.getClientWriteKey(), suite.cipherAlgorithm().name()));
+
+        for (int i = 0; i < 1024; i++)
+        {
+            byte[] data1 = new byte[i];
+            Arrays.fill(data1, (byte) i);
+            ByteBuffer output = ByteBuffer.allocate(2048); // should be large enough
+            out.encrypt(new ByteBuffer[]{ByteBuffer.wrap(data1)}, 0, 1, ContentType.APPLICATION_DATA, output);
+            output.flip();
+            Record record = new Record(output);
+            ByteBuffer decrypted = ByteBuffer.allocate(record.length());
+            in.decrypt(record, new ByteBuffer[]{decrypted}, 0, 1);
+            decrypted.flip();
+            assertEquals(i, decrypted.remaining());
+            byte[] data2 = new byte[i];
+            decrypted.get(data2);
+            assertArrayEquals(data1, data2);
+        }
+    }
 }
